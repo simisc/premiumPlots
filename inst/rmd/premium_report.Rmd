@@ -1,0 +1,69 @@
+---
+title: "premium report"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = knitr.root.directory)
+# showwd <- function() {
+#     rmdwd <- getwd()
+#     stop(sprintf("now in %s", rmdwd))
+# } 
+# showwd() # looking for relative paths in PReMiuM/rmd (location of Rmd file), not in user's working directory
+```
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE, results = "hide"}
+diss <- lapply(premium.models, calcDissimilarityMatrix)
+clus <- lapply(diss, calcOptimalClustering) # choose maxClusters?
+prof <- lapply(clus, calcAvgRiskAndProfile)
+```
+
+## Choose top covariates
+
+```{r}
+rho_ranks <- lapply(premium.models, function(m) {
+  tibble(var = names(m$xMat),
+         rank = rank(summariseVarSelectRho(m)$rhoMean))
+  }) %>%
+  bind_rows() %>%
+  group_by(var) %>%
+  summarise(rank = mean(rank)) %>%
+  arrange(desc(rank))
+(top_covariates <- rho_ranks$var[1:10])
+(low_covariates <- rho_ranks$var[155:163])
+do.call(getHyperparams, premium.models)
+```
+
+## Plot summaries
+
+```{r}
+do.call(plotVarSelectRho, premium.models)
+do.call(plotClusterSizes, prof)
+do.call(plotSimilarityMatrix, diss)
+```
+
+## Plot profiles
+
+```{r, message=FALSE, warning=FALSE}
+lapply(prof, plotResponse)
+lapply(prof, plotCovariateProfiles, whichCovariates = top_covariates) # why warnings?
+lapply(prof, plotCovariateProfiles, whichCovariates = low_covariates) # using starred profile
+```
+
+## Plot diagnostics
+
+```{r}
+alpha.mcmc <- do.call(codaFromPremium, c("alpha", premium.models))
+summary(alpha.mcmc)
+plot(alpha.mcmc)
+par(mfrow = c(3, 1))
+autocorr.plot(alpha.mcmc, auto.layout = F)
+gelman.plot(alpha.mcmc)
+nclus.mcmc <- do.call(codaFromPremium, c("nClusters", premium.models))
+summary(nclus.mcmc)
+plot(nclus.mcmc)
+par(mfrow = c(3, 1))
+autocorr.plot(nclus.mcmc, auto.layout = F)
+gelman.plot(nclus.mcmc)
+```
