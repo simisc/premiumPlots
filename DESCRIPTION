@@ -10,5 +10,5 @@ Description: Utility function to plot the results of models fitted
 License: CC-0
 Encoding: UTF-8
 LazyData: true
-Imports: dplyr (>= 0.7), ggplot2 (>=2.2), reshape2 (>= 1.4.1),
-    rmarkdown (>= 1.8), tibble (>= 1.4), coda (0.18), stringr (>= 1.2)
+Imports: dplyr (>= 0.7), ggplot2 (>= 2.2), reshape2 (>= 1.4.1),
+    rmarkdown (>= 1.8), tibble (>= 1.4), coda (>= 0.18), stringr (>= 1.2)
