@@ -1,7 +1,15 @@
+#' Summarise the posterior distribution of the variable selection
+#'     parameter \code{rho}. Modified version of
+#'     \code{\link[PReMiuM]{summariseVarSelectRho}}, allowing plotting
+#'     functions to access \code{rho} summaries.
+#' @export
+#' @param riskProfObj Object of type \code{riskProfObj}, output of
+#'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
+#' @return A \code{\link[tibble]{tibble}} containing the mean, median,
+#'     lower (0.05) and upper (0.95) quantiles for each covariate,
+#'     and a ranking from the covariate with the highest value of
+#'     \code{rho} to the lowest.
 summariseVarSelectRhoFromRiskProfObj <- function (riskProfObj) {
-    # Modified version of summariseVarSelectRho(), needed because
-    # plotting functions are called on the RiskProfObj instead of on
-    # the runInfoObj.
 
     for (i in 1:length(riskProfObj))
         assign(names(riskProfObj)[i],
@@ -37,6 +45,27 @@ summariseVarSelectRhoFromRiskProfObj <- function (riskProfObj) {
         dplyr::mutate(rhoRank = rank(-rhoMean))
 }
 
+#' Plots the (discrete) covariate profiles, facetted by cluster.
+#' @export
+#' @param riskProfObj Object of type \code{riskProfObj}, output of
+#'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
+#' @param whichCovariates A vector of indices or a vector of strings
+#'     corresponding to the covariates that are to be displayed. If
+#'     a single integer, this is intepreted as the 'top N' covariates,
+#'     as ranked by their value of \code{rho} (requires the model to
+#'     have been fitted with variable selection).
+#' @param rhoMinimum As an alternative to \code{whichCovariates}, plot
+#'     plot all covariates whose value of \code{rho} is greater than
+#'     some threshold (requires the model to have been fitted with
+#'     variable selection).
+#' @param useProfileStar o be set equal to TRUE only if a variable
+#'     selection procedure has been run. The definition of the star
+#'     profile is given in Liverani, S., Hastie, D. I. and Richardson,
+#'     S. (2013) PReMiuM: An R package for Bayesian profile regression.
+#' @param covariate_levels Vector of integer values taken by the
+#'     (discrete) covariates, specifying the order of the facets.
+#' @param covariate_labels Vector of strings giving labels for each
+#'     level of the covariate, in the same order as \code{covariate_levels}.
 plotProfilesByCluster <- function (riskProfObj,
                                    whichCovariates = NULL,
                                    rhoMinimum = NULL,
@@ -96,6 +125,28 @@ plotProfilesByCluster <- function (riskProfObj,
                                       range = c(0.25, 1))
 }
 
+#' Plots the (discrete) covariate profiles, facetted by covariate,
+#'     similar to the layout in \code{\link[PReMiuM]{plotRiskProfile}}.
+#' @export
+#' @param riskProfObj Object of type \code{riskProfObj}, output of
+#'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
+#' @param whichCovariates A vector of indices or a vector of strings
+#'     corresponding to the covariates that are to be displayed. If
+#'     a single integer, this is intepreted as the 'top N' covariates,
+#'     as ranked by their value of \code{rho} (requires the model to
+#'     have been fitted with variable selection).
+#' @param rhoMinimum As an alternative to \code{whichCovariates}, plot
+#'     plot all covariates whose value of \code{rho} is greater than
+#'     some threshold (requires the model to have been fitted with
+#'     variable selection).
+#' @param useProfileStar o be set equal to TRUE only if a variable
+#'     selection procedure has been run. The definition of the star
+#'     profile is given in Liverani, S., Hastie, D. I. and Richardson,
+#'     S. (2013) PReMiuM: An R package for Bayesian profile regression.
+#' @param covariate_levels Vector of integer values taken by the
+#'     (discrete) covariates, specifying the order of the facets.
+#' @param covariate_labels Vector of strings giving labels for each
+#'     level of the covariate, in the same order as \code{covariate_levels}.
 plotCovariateProfiles <- function (riskProfObj,
                                    whichCovariates = NULL,
                                    rhoMinimum = NULL,
@@ -141,6 +192,7 @@ plotCovariateProfiles <- function (riskProfObj,
         ggplot2::facet_grid(factor(category) ~ reorder(covrho, rhoRank))
 }
 
+#' @export
 tabulateCovariateProfiles <- function (riskProfObj,
                                        whichCovariates = NULL,
                                        rhoMinimum = NULL,
@@ -245,6 +297,15 @@ tabulateCovariateProfiles <- function (riskProfObj,
         dplyr::left_join(rhotab, by = c("covname" = "var"))
 }
 
+#' Plots the (categorical) response profiles, similar to the layout
+#'     of the 'risk' plot in \code{\link[PReMiuM]{plotRiskProfile}}.
+#' @export
+#' @param riskProfObj Object of type \code{riskProfObj}, output of
+#'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
+#' @param response_levels Vector of integer values taken by the
+#'     (categorical) response, specifying the order of the facets.
+#' @param response_labels Vector of strings giving labels for each
+#'     level of the response, in the same order as \code{response_levels}.
 plotResponse <- function (riskProfObj,
                           response_levels = NULL,
                           response_labels = NULL) {
@@ -334,6 +395,10 @@ plotResponse <- function (riskProfObj,
         ggplot2::facet_grid(. ~ factor(category))
 }
 
+#' Plots the cluster sizes
+#' @export
+#' @param ... Object(s) of type \code{riskProfObj}, output of
+#'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
 plotClusterSizes <- function (...) {
     # riskprofs <- list(risk.profile.object, ...)
     # arg <- deparse(substitute(risk.profile.object))
@@ -375,6 +440,8 @@ plotClusterSizes <- function (...) {
         ggplot2::expand_limits(y = 0)
 }
 
+#' Duplicate of \code{\link[PReMiuM]{vec2mat}}
+#' @export
 vec2mat <- function (data = NA, nrow = 1) {
     # No need to import PReMiuM itself.
     nData <- length(data)
@@ -387,6 +454,11 @@ vec2mat <- function (data = NA, nrow = 1) {
     return(result)
 }
 
+#' Plots the similarity matrix, in the original order and sorted by
+#'     (hierarchical) cluster to illustrate cluster structure.
+#' @export
+#' @param ... Object(s) of type \code{disSimObj}, output of
+#'     \code{\link[PReMiuM]{calcDissimilarityMatrix}}.
 plotSimilarityMatrix <- function(...) {
     # dissims <- list(dissim.object, ...)
     # arg <- deparse(substitute(dissim.object))
@@ -450,6 +522,13 @@ plotSimilarityMatrix <- function(...) {
         ggplot2::labs(title = "Similarity matrix")
 }
 
+#' Plots the cumulative distribution of the variable selection
+#'     parameter \code{rho}. Can be interpreted as the proportion of
+#'     covariates that would be dropped if only those above a given
+#'     threshold of \code{rho} were included.
+#' @export
+#' @param ... Object(s) of type \code{riskProfObj}, output of
+#'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
 plotVarSelectRho <- function(...) {
     riskprofs <- list(...)
     length(riskprofs) >= 1 ||
@@ -472,6 +551,12 @@ plotVarSelectRho <- function(...) {
                       y = "proportion of variables deselected")
 }
 
+#' Assemble MCMC samples from \code{link[PReMiuM]{profRegr}} into
+#'     a \code{\link[coda]{mcmc.list}} object with multiple chains.
+#' @export
+#' @param ... Object(s) of type \code{runInfoObj}, output of
+#'     \code{\link[PReMiuM]{profRegr}}.
+#' @return A \code{\link[coda]{mcmc.list}}.
 codaFromPremium <- function(global.parameter, ...) {
     # models <- list(premium.model, ...)
     # arg <- deparse(substitute(premium.model))
@@ -497,6 +582,12 @@ codaFromPremium <- function(global.parameter, ...) {
     coda::mcmc.list(data)
 }
 
+#' Get hyperparameters used to fit a PReMiuM model.
+#' @export
+#' @param ... Object(s) of type \code{runInfoObj}, output of
+#'     \code{\link[PReMiuM]{profRegr}}.
+#' @return A matrix with a named column for each model and a named
+#'     row for each hyperparameter.
 getHyperparams <- function(...) {
     # Must be a cleaner way to do this...
 
@@ -525,6 +616,15 @@ getHyperparams <- function(...) {
     data
 }
 
+#' Render a standardised HTML report on PReMiuM model(s) using
+#'     markdown, with covariate/response profiles and MCMC diagnostics.
+#' @export
+#' @param ... Object(s) of type \code{runInfoObj}, output of
+#'     \code{\link[PReMiuM]{profRegr}}.
+#' @param filename File name (.html) to save markdown report.
+#' @param rmd.template An alternate Rmd template to populate using
+#'     the models in \code{...}.
+#' @return An HTML file written to \code{filename}.
 renderPremiumReport <-
     function(...,
              filename = "premium_report.html",

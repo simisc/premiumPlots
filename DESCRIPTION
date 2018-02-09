@@ -6,9 +6,11 @@ Author: Simon Schoenbuchner
 Maintainer: The package maintainer <yourself@somewhere.net>
 Description: Utility function to plot the results of models fitted
     using the PReMiuM package, and to compare across MCMC chains from
-    multiple PReMiuM models.
+    multiple PReMiuM models. Currently only supports models with a
+    categorical outcome and discrete covariates.
 License: CC-0
 Encoding: UTF-8
 LazyData: true
 Imports: dplyr (>= 0.7), ggplot2 (>= 2.2), reshape2 (>= 1.4.1),
     rmarkdown (>= 1.8), tibble (>= 1.4), coda (>= 0.18), stringr (>= 1.2)
+RoxygenNote: 6.0.1
