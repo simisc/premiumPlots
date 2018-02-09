@@ -38,7 +38,7 @@ do.call(getHyperparams, premium.models)
 ## Plot summaries
 
 ```{r}
-do.call(plotVarSelectRho, premium.models)
+do.call(plotVarSelectRho, prof)
 do.call(plotClusterSizes, prof)
 do.call(plotSimilarityMatrix, diss)
 ```

@@ -21,7 +21,7 @@ summariseVarSelectRhoFromRiskProfObj <- function (riskProfObj) {
     firstLine <- ifelse(reportBurnIn, nBurn / nFilter + 2, 1)
     lastLine <-
         (nSweeps + ifelse(reportBurnIn, nBurn + 1, 0)) / nFilter
-    rhoMat <- rhoMat[firstLine:lastLine,]
+    rhoMat <- rhoMat[firstLine:lastLine, ]
     rhoMean <- apply(rhoMat, 2, mean)
     rhoMedian <- apply(rhoMat, 2, median)
     rhoLowerCI <- apply(rhoMat, 2, quantile, 0.05)
@@ -189,7 +189,7 @@ tabulateCovariateProfiles <- function (riskProfObj,
         }
         covNames <- covNames[whichCovariates]
         nCovariates <- length(whichCovariates)
-        profile <- profile[, , whichCovariates,]
+        profile <- profile[, , whichCovariates, ]
         nCategories <- nCategories[whichCovariates]
     }
 
@@ -197,7 +197,7 @@ tabulateCovariateProfiles <- function (riskProfObj,
     orderStat <- apply(risk, 2, median)
     meanSortIndex <- order(orderStat, decreasing = F)
     clusterSizes <- clusterSizes[meanSortIndex]
-    profile <- profile[, meanSortIndex, ,]
+    profile <- profile[, meanSortIndex, , ]
 
     profDFlist = list()
 
@@ -229,8 +229,9 @@ tabulateCovariateProfiles <- function (riskProfObj,
                     fillColor = as.character(fillColor)
                 )
 
-            profileDF <- tibble::tibble(cluster = rep(1:nClusters, each = nrow(probMat)),
-                                        est = c(probMat)) %>%
+            profileDF <-
+                tibble::tibble(cluster = rep(1:nClusters, each = nrow(probMat)),
+                               est = c(probMat)) %>%
                 dplyr::left_join(clusterDF, by = "cluster")
 
             miniDFlist[[k]] <- profileDF
@@ -272,7 +273,7 @@ plotResponse <- function (riskProfObj,
     orderStat <- apply(risk, 2, median)
     meanSortIndex <- order(orderStat, decreasing = F)
     clusterSizes <- clusterSizes[meanSortIndex]
-    risk <- risk[, meanSortIndex,]
+    risk <- risk[, meanSortIndex, ]
 
     miniDFlist = list() # still growing lists, not ideal...
 
@@ -298,8 +299,9 @@ plotResponse <- function (riskProfObj,
                 fillColor = as.character(fillColor)
             )
 
-        profileDF <- tibble::tibble(cluster = rep(1:nClusters, each = nrow(probMat)),
-                                    est = c(probMat)) %>%
+        profileDF <-
+            tibble::tibble(cluster = rep(1:nClusters, each = nrow(probMat)),
+                           est = c(probMat)) %>%
             dplyr::left_join(clusterDF, by = "cluster")
 
         miniDFlist[[k]] <- profileDF
@@ -374,6 +376,7 @@ plotClusterSizes <- function (...) {
 }
 
 vec2mat <- function (data = NA, nrow = 1) {
+    # No need to import PReMiuM itself.
     nData <- length(data)
     nElem <- round(nrow * (nrow + 1) / 2)
     result <- matrix(NA, nrow = nrow, ncol = nrow)
@@ -531,7 +534,7 @@ renderPremiumReport <-
             stop("Supply at least one premium model.")
         if (is.null(rmd.template)) {
             rmd.template <-
-                system.file("rmd/premium_report.Rmd", package = "PReMiuM")
+                system.file("rmd/premium_report.Rmd", package = "premiumPlots")
         }
         knitr.root.directory <- getwd()
         filepath <- file.path(knitr.root.directory, filename)
