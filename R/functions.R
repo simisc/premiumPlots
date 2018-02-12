@@ -440,20 +440,6 @@ plotClusterSizes <- function (...) {
         ggplot2::expand_limits(y = 0)
 }
 
-#' Duplicate of \code{\link[PReMiuM]{vec2mat}}
-#' @export
-vec2mat <- function (data = NA, nrow = 1) {
-    # No need to import PReMiuM itself.
-    nData <- length(data)
-    nElem <- round(nrow * (nrow + 1) / 2)
-    result <- matrix(NA, nrow = nrow, ncol = nrow)
-    result[lower.tri(result, diag = FALSE)] <- data
-    result[upper.tri(result, diag = FALSE)] <-
-        t(result)[upper.tri(result)]
-    diag(result) <- 0
-    return(result)
-}
-
 #' Plots the similarity matrix, in the original order and sorted by
 #'     (hierarchical) cluster to illustrate cluster structure.
 #' @export
@@ -476,14 +462,9 @@ plotSimilarityMatrix <- function(...) {
     data <- lapply(dissims, function(d) {
         n <- d$disSimRunInfoObj$nSubjects
 
-        # dsvec <- d$disSimMat
-        # nData <- length(dsvec)
-        # nElem <- round(n * (n + 1) / 2)
-        # dsmat <- matrix(NA, nrow = n, ncol = n)
-        # dsmat[lower.tri(dsmat, diag = FALSE)] <- dsvec
-        # # dsmat[upper.tri(dsmat, diag = FALSE)] <- t(dsmat)[upper.tri(dsmat)]
-        # diag(dsmat) <- 0
-        # dsmat <- 1 - t(dsmat)
+        dsmat <- matrix(0, nrow = n, ncol = n)
+        dsmat[lower.tri(dsmat)] <- d$disSimMat
+        dsmat[upper.tri(dsmat)] <- t(dsmat)[upper.tri(dsmat)]
 
         dsmat <- 1 - vec2mat(d$disSimMat, nrow = n)
 
