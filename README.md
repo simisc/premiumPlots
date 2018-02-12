@@ -4,5 +4,5 @@ Plot PReMiuM results and diagnostics. Installation from private repo requires PA
 
 ```
 Sys.setenv(GITHUB_PAT = "")
-install_github("simisc/PReMiuM-sms", auth_token = github_pat())
+install_github("simisc/premiumPlots", auth_token = github_pat())
 ```
