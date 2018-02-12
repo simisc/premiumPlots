@@ -2,8 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{renderPremiumReport}
 \alias{renderPremiumReport}
-\title{Render a standardised HTML report on PReMiuM model(s) using
-    markdown, with covariate/response profiles and MCMC diagnostics.}
+\title{Render PReMiuM report}
 \usage{
 renderPremiumReport(..., filename = "premium_report.html",
   rmd.template = NULL)

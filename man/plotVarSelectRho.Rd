@@ -2,10 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{plotVarSelectRho}
 \alias{plotVarSelectRho}
-\title{Plots the cumulative distribution of the variable selection
-    parameter \code{rho}. Can be interpreted as the proportion of
-    covariates that would be dropped if only those above a given
-    threshold of \code{rho} were included.}
+\title{Plot cumulative distribution of \code{rho}}
 \usage{
 plotVarSelectRho(...)
 }

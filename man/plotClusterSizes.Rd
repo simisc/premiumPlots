@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{plotClusterSizes}
 \alias{plotClusterSizes}
-\title{Plots the cluster sizes}
+\title{Plot cluster sizes}
 \usage{
 plotClusterSizes(...)
 }
@@ -11,5 +11,5 @@ plotClusterSizes(...)
 \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.}
 }
 \description{
-Plots the cluster sizes
+Plots the cluster sizes from one or more PReMiuM models
 }

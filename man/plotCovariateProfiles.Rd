@@ -2,8 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{plotCovariateProfiles}
 \alias{plotCovariateProfiles}
-\title{Plots the (discrete) covariate profiles, facetted by covariate,
-    similar to the layout in \code{\link[PReMiuM]{plotRiskProfile}}.}
+\title{Plot covariate profiles by covariate}
 \usage{
 plotCovariateProfiles(riskProfObj, whichCovariates = NULL,
   rhoMinimum = NULL, useProfileStar = TRUE, covariate_levels = NULL,

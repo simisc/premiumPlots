@@ -2,8 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{codaFromPremium}
 \alias{codaFromPremium}
-\title{Assemble MCMC samples from \code{link[PReMiuM]{profRegr}} into
-    a \code{\link[coda]{mcmc.list}} object with multiple chains.}
+\title{Make a coda object PReMiuM samples}
 \usage{
 codaFromPremium(global.parameter, ...)
 }

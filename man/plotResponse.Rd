@@ -2,8 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{plotResponse}
 \alias{plotResponse}
-\title{Plots the (categorical) response profiles, similar to the layout
-    of the 'risk' plot in \code{\link[PReMiuM]{plotRiskProfile}}.}
+\title{Plot response profiles}
 \usage{
 plotResponse(riskProfObj, response_levels = NULL, response_labels = NULL)
 }

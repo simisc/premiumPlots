@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{plotProfilesByCluster}
 \alias{plotProfilesByCluster}
-\title{Plots the (discrete) covariate profiles, facetted by cluster.}
+\title{Plot covariate profiles by cluster}
 \usage{
 plotProfilesByCluster(riskProfObj, whichCovariates = NULL,
   rhoMinimum = NULL, useProfileStar = TRUE, covariate_levels = NULL,

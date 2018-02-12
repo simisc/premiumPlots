@@ -2,8 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{plotSimilarityMatrix}
 \alias{plotSimilarityMatrix}
-\title{Plots the similarity matrix, in the original order and sorted by
-    (hierarchical) cluster to illustrate cluster structure.}
+\title{Plot similarity matrix}
 \usage{
 plotSimilarityMatrix(...)
 }

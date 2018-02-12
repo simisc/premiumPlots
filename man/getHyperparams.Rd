@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{getHyperparams}
 \alias{getHyperparams}
-\title{Get hyperparameters used to fit a PReMiuM model.}
+\title{Get PReMiuM hyperparameters}
 \usage{
 getHyperparams(...)
 }

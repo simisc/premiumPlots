@@ -2,10 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{summariseVarSelectRhoFromRiskProfObj}
 \alias{summariseVarSelectRhoFromRiskProfObj}
-\title{Summarise the posterior distribution of the variable selection
-    parameter \code{rho}. Modified version of
-    \code{\link[PReMiuM]{summariseVarSelectRho}}, allowing plotting
-    functions to access \code{rho} summaries.}
+\title{Summarise \code{rho}}
 \usage{
 summariseVarSelectRhoFromRiskProfObj(riskProfObj)
 }

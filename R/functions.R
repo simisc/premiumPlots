@@ -1,3 +1,5 @@
+#' Summarise \code{rho}
+#'
 #' Summarise the posterior distribution of the variable selection
 #'     parameter \code{rho}. Modified version of
 #'     \code{\link[PReMiuM]{summariseVarSelectRho}}, allowing plotting
@@ -45,6 +47,8 @@ summariseVarSelectRhoFromRiskProfObj <- function (riskProfObj) {
         dplyr::mutate(rhoRank = rank(-rhoMean))
 }
 
+#' Plot covariate profiles by cluster
+#'
 #' Plots the (discrete) covariate profiles, facetted by cluster.
 #' @export
 #' @param riskProfObj Object of type \code{riskProfObj}, output of
@@ -93,7 +97,7 @@ plotProfilesByCluster <- function (riskProfObj,
     covtab <- profileDF %>%
         dplyr::group_by(cluster, category, covname, fillColor, rhoMean, rhoRank) %>%
         dplyr::summarise(prop = mean(est)) %>%
-        dplyr::mutate(covrho = sprintf("%s (%i%%)", covname, round(100 * rhoMean)))
+        dplyr::mutate(covrho = sprintf("%s (%.2f)", covname, rhoMean))
 
     expected_proportions <-
         tapply(profileDF$mean, profileDF$category, mean)
@@ -116,7 +120,7 @@ plotProfilesByCluster <- function (riskProfObj,
             vjust = 0.5
         )) +
         ggplot2::labs(
-            x = sprintf("Covariates (rho >= %.i%%)", round(100 * rhoMinimum)),
+            x = sprintf("Covariates (rho >= %.2f)", rhoMinimum),
             y = "Proportion (by cluster)",
             title = "Covariate profiles"
         ) +
@@ -125,6 +129,8 @@ plotProfilesByCluster <- function (riskProfObj,
                                       range = c(0.25, 1))
 }
 
+#' Plot covariate profiles by covariate
+#'
 #' Plots the (discrete) covariate profiles, facetted by covariate,
 #'     similar to the layout in \code{\link[PReMiuM]{plotRiskProfile}}.
 #' @export
@@ -171,7 +177,7 @@ plotCovariateProfiles <- function (riskProfObj,
     }
 
     profileDF <- profileDF %>%
-        dplyr::mutate(covrho = sprintf("%s (%i%%)", covname, round(100 * rhoMean)))
+        dplyr::mutate(covrho = sprintf("%s (%.2f)", covname, rhoMean))
 
     cols <- c(high = "#CC0033",
               low = "#0066CC",
@@ -297,6 +303,8 @@ tabulateCovariateProfiles <- function (riskProfObj,
         dplyr::left_join(rhotab, by = c("covname" = "var"))
 }
 
+#' Plot response profiles
+#'
 #' Plots the (categorical) response profiles, similar to the layout
 #'     of the 'risk' plot in \code{\link[PReMiuM]{plotRiskProfile}}.
 #' @export
@@ -395,7 +403,9 @@ plotResponse <- function (riskProfObj,
         ggplot2::facet_grid(. ~ factor(category))
 }
 
-#' Plots the cluster sizes
+#' Plot cluster sizes
+#'
+#' Plots the cluster sizes from one or more PReMiuM models
 #' @export
 #' @param ... Object(s) of type \code{riskProfObj}, output of
 #'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
@@ -440,6 +450,8 @@ plotClusterSizes <- function (...) {
         ggplot2::expand_limits(y = 0)
 }
 
+#' Plot similarity matrix
+#'
 #' Plots the similarity matrix, in the original order and sorted by
 #'     (hierarchical) cluster to illustrate cluster structure.
 #' @export
@@ -503,6 +515,8 @@ plotSimilarityMatrix <- function(...) {
         ggplot2::labs(title = "Similarity matrix")
 }
 
+#' Plot cumulative distribution of \code{rho}
+#'
 #' Plots the cumulative distribution of the variable selection
 #'     parameter \code{rho}. Can be interpreted as the proportion of
 #'     covariates that would be dropped if only those above a given
@@ -532,6 +546,8 @@ plotVarSelectRho <- function(...) {
                       y = "proportion of variables deselected")
 }
 
+#' Make a coda object PReMiuM samples
+#'
 #' Assemble MCMC samples from \code{link[PReMiuM]{profRegr}} into
 #'     a \code{\link[coda]{mcmc.list}} object with multiple chains.
 #' @export
@@ -563,6 +579,8 @@ codaFromPremium <- function(global.parameter, ...) {
     coda::mcmc.list(data)
 }
 
+#' Get PReMiuM hyperparameters
+#'
 #' Get hyperparameters used to fit a PReMiuM model.
 #' @export
 #' @param ... Object(s) of type \code{runInfoObj}, output of
@@ -597,6 +615,8 @@ getHyperparams <- function(...) {
     data
 }
 
+#' Render PReMiuM report
+#'
 #' Render a standardised HTML report on PReMiuM model(s) using
 #'     markdown, with covariate/response profiles and MCMC diagnostics.
 #' @export
