@@ -7,8 +7,8 @@
 plotSimilarityMatrix(...)
 }
 \arguments{
-\item{...}{Object(s) of type \code{disSimObj}, output of
-\code{\link[PReMiuM]{calcDissimilarityMatrix}}.}
+\item{...}{Object(s) of type \code{riskProfObj}, output of
+\code{\link[PReMiuM]{calcAvgRiskAndProfile}}.}
 }
 \description{
 Plots the similarity matrix, in the original order and sorted by

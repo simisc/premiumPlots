@@ -410,11 +410,6 @@ plotResponse <- function (riskProfObj,
 #' @param ... Object(s) of type \code{riskProfObj}, output of
 #'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
 plotClusterSizes <- function (...) {
-    # riskprofs <- list(risk.profile.object, ...)
-    # arg <- deparse(substitute(risk.profile.object))
-    # dots <- substitute(list(...))[-1]
-    # names <- c(arg, sapply(dots, deparse))
-    # names(riskprofs) <- names
 
     riskprofs <- list(...)
     length(riskprofs) >= 1 ||
@@ -455,30 +450,28 @@ plotClusterSizes <- function (...) {
 #' Plots the similarity matrix, in the original order and sorted by
 #'     (hierarchical) cluster to illustrate cluster structure.
 #' @export
-#' @param ... Object(s) of type \code{disSimObj}, output of
-#'     \code{\link[PReMiuM]{calcDissimilarityMatrix}}.
+#' @param ... Object(s) of type \code{riskProfObj}, output of
+#'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
 plotSimilarityMatrix <- function(...) {
-    # dissims <- list(dissim.object, ...)
-    # arg <- deparse(substitute(dissim.object))
-    # dots <- substitute(list(...))[-1]
-    # names <- c(arg, sapply(dots, deparse))
-    # names(dissims) <- names
 
-    dissims <- list(...)
-    length(dissims) >= 1 ||
-        stop("Supply at least one dissimilarity object.")
+    riskprofs <- list(...)
+    length(riskprofs) >= 1 ||
+        stop("Supply at least one risk profile object.")
     # dots <- substitute(list(...))[-1]
     # names <- sapply(dots, deparse)
-    # names(dissims) <- names
+    # names(riskprofs) <- names
 
-    data <- lapply(dissims, function(d) {
-        n <- d$disSimRunInfoObj$nSubjects
+    data <- lapply(riskprofs, function(d) {
+
+        disSimMat <- d$riskProfClusObj$clusObjDisSimMat
+
+        n <- d$riskProfClusObj$clusObjRunInfoObj$nSubjects
 
         dsmat <- matrix(0, nrow = n, ncol = n)
-        dsmat[lower.tri(dsmat)] <- d$disSimMat
+        dsmat[lower.tri(dsmat)] <- disSimMat
         dsmat[upper.tri(dsmat)] <- t(dsmat)[upper.tri(dsmat)]
 
-        dsmat <- 1 - vec2mat(d$disSimMat, nrow = n)
+        dsmat <- 1 - vec2mat(disSimMat, nrow = n)
 
         ddist <- as.dist(1 - dsmat)
         hc <- hclust(ddist)
@@ -488,8 +481,7 @@ plotSimilarityMatrix <- function(...) {
         dsmat2[lower.tri(dsmat2)] <- NA
 
         m <- tibble::as_tibble(reshape2::melt(dsmat, na.rm = TRUE))
-        m2 <-
-            tibble::as_tibble(reshape2::melt(dsmat2, na.rm = TRUE))
+        m2 <- tibble::as_tibble(reshape2::melt(dsmat2, na.rm = TRUE))
         m$type <- "Subjects in original order"
         m2$type <- "Subjects reordered by hclust"
         m3 <- dplyr::bind_rows(m, m2)
@@ -525,6 +517,7 @@ plotSimilarityMatrix <- function(...) {
 #' @param ... Object(s) of type \code{riskProfObj}, output of
 #'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
 plotVarSelectRho <- function(...) {
+
     riskprofs <- list(...)
     length(riskprofs) >= 1 ||
         stop("Supply at least one risk profile object.")
@@ -555,11 +548,6 @@ plotVarSelectRho <- function(...) {
 #'     \code{\link[PReMiuM]{profRegr}}.
 #' @return A \code{\link[coda]{mcmc.list}}.
 codaFromPremium <- function(global.parameter, ...) {
-    # models <- list(premium.model, ...)
-    # arg <- deparse(substitute(premium.model))
-    # dots <- substitute(list(...))[-1]
-    # names <- c(arg, sapply(dots, deparse))
-    # names(models) <- names
 
     models <- list(...)
     length(models) >= 1 ||
