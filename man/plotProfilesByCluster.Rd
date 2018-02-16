@@ -6,7 +6,7 @@
 \usage{
 plotProfilesByCluster(riskProfObj, whichCovariates = NULL,
   rhoMinimum = NULL, useProfileStar = TRUE, covariate_levels = NULL,
-  covariate_labels = NULL)
+  covariate_labels = NULL, covariate_split = NULL)
 }
 \arguments{
 \item{riskProfObj}{Object of type \code{riskProfObj}, output of
@@ -33,6 +33,10 @@ S. (2013) PReMiuM: An R package for Bayesian profile regression.}
 
 \item{covariate_labels}{Vector of strings giving labels for each
 level of the covariate, in the same order as \code{covariate_levels}.}
+
+\item{covariate_split}{A string (character vector of length one)
+that appears in a subset of covariate names. This is used to
+create a separate horizontal facets for this group of covariates.}
 }
 \description{
 Plots the (discrete) covariate profiles, facetted by cluster.

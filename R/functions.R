@@ -11,7 +11,7 @@
 #'     lower (0.05) and upper (0.95) quantiles for each covariate,
 #'     and a ranking from the covariate with the highest value of
 #'     \code{rho} to the lowest.
-summariseVarSelectRhoFromRiskProfObj <- function (riskProfObj) {
+tabulateVarSelectRho <- function (riskProfObj) {
 
     for (i in 1:length(riskProfObj))
         assign(names(riskProfObj)[i],
@@ -70,12 +70,16 @@ summariseVarSelectRhoFromRiskProfObj <- function (riskProfObj) {
 #'     (discrete) covariates, specifying the order of the facets.
 #' @param covariate_labels Vector of strings giving labels for each
 #'     level of the covariate, in the same order as \code{covariate_levels}.
+#' @param covariate_split A string (character vector of length one)
+#'     that appears in a subset of covariate names. This is used to
+#'     create a separate horizontal facets for this group of covariates.
 plotProfilesByCluster <- function (riskProfObj,
                                    whichCovariates = NULL,
                                    rhoMinimum = NULL,
                                    useProfileStar = TRUE,
                                    covariate_levels = NULL,
-                                   covariate_labels = NULL) {
+                                   covariate_labels = NULL,
+                                   covariate_split = NULL) {
     profileDF <- tabulateCovariateProfiles(
         riskProfObj = riskProfObj,
         whichCovariates = whichCovariates,
@@ -94,8 +98,27 @@ plotProfilesByCluster <- function (riskProfObj,
                                             labels = covariate_labels))
     }
 
-    covtab <- profileDF %>%
-        dplyr::group_by(cluster, category, covname, fillColor, rhoMean, rhoRank) %>%
+    if (!is.null(covariate_split)) {
+        covtab <- profileDF %>%
+            dplyr::mutate(type = stringr::str_extract(
+                covname,
+                covariate_split),
+                type = stringr::str_replace_na(
+                    type,
+                    sprintf("!%s", covariate_split))) %>%
+            dplyr::group_by(cluster, category, covname, fillColor, rhoMean, rhoRank, type)
+        facetting_layer <- list(
+            ggplot2::facet_grid(cluster ~ type, scales = "free_x", space = "free_x")
+        )
+    } else {
+        covtab <- profileDF %>%
+            dplyr::group_by(cluster, category, covname, fillColor, rhoMean, rhoRank)
+        facetting_layer <- list(
+            ggplot2::facet_grid(cluster ~ .)
+        )
+    }
+
+    covtab <- covtab %>%
         dplyr::summarise(prop = mean(est)) %>%
         dplyr::mutate(covrho = sprintf("%s (%.2f)", covname, rhoMean))
 
@@ -112,7 +135,6 @@ plotProfilesByCluster <- function (riskProfObj,
                         alpha = fillColor != "avg"
                     )) +
         ggplot2::geom_bar(position = "fill", stat = "identity") +
-        ggplot2::facet_grid(cluster ~ .) +
         ggplot2::geom_hline(yintercept = expected_proportions, linetype = "dashed") +
         ggplot2::theme(axis.text.x = ggplot2::element_text(
             angle = 90,
@@ -120,13 +142,16 @@ plotProfilesByCluster <- function (riskProfObj,
             vjust = 0.5
         )) +
         ggplot2::labs(
-            x = sprintf("Covariates (rho >= %.2f)", rhoMinimum),
+            x = sprintf("Covariates (rho >= %.2f, top %i)",
+                        rhoMinimum,
+                        length(unique(covtab$covrho))),
             y = "Proportion (by cluster)",
             title = "Covariate profiles"
         ) +
         ggplot2::scale_fill_discrete(name = "Marker\nprevalence\ncategory") +
         ggplot2::scale_alpha_discrete(name = "Proportion\ndifferent\nfrom mean",
-                                      range = c(0.25, 1))
+                                      range = c(0.25, 1)) +
+        facetting_layer
 }
 
 #' Plot covariate profiles by covariate
@@ -227,7 +252,7 @@ tabulateCovariateProfiles <- function (riskProfObj,
         profile <- profileStar
     }
 
-    rhotab <- summariseVarSelectRhoFromRiskProfObj(riskProfObj)
+    rhotab <- tabulateVarSelectRho(riskProfObj)
 
     if (is.null(whichCovariates) & !is.null(rhoMinimum)) {
         # If specify minimum rho value instead of which covariates
@@ -251,9 +276,7 @@ tabulateCovariateProfiles <- function (riskProfObj,
         nCategories <- nCategories[whichCovariates]
     }
 
-    # clusters numbered in consistent order (same in plotResponse and plotClusterSizes)
-    orderStat <- apply(risk, 2, median)
-    meanSortIndex <- order(orderStat, decreasing = F)
+    meanSortIndex <- order(clusterSizes, decreasing = T)
     clusterSizes <- clusterSizes[meanSortIndex]
     profile <- profile[, meanSortIndex, , ]
 
@@ -339,8 +362,7 @@ plotResponse <- function (riskProfObj,
         stop("Only for categorical response, use plotRiskProfile() for others...")
     }
 
-    orderStat <- apply(risk, 2, median)
-    meanSortIndex <- order(orderStat, decreasing = F)
+    meanSortIndex <- order(clusterSizes, decreasing = T)
     clusterSizes <- clusterSizes[meanSortIndex]
     risk <- risk[, meanSortIndex, ]
 
@@ -350,8 +372,7 @@ plotResponse <- function (riskProfObj,
         probMat <- risk[, , k] # 2D matrix for categ. k
         probMeans <- apply(probMat, 2, mean, trim = 0.005)
 
-        probMean <-
-            sum(probMeans * clusterSizes) / sum(clusterSizes)
+        probMean <- sum(probMeans * clusterSizes) / sum(clusterSizes)
         probLower <- apply(probMat, 2, quantile, 0.05)
         probUpper <- apply(probMat, 2, quantile, 0.95)
 
@@ -412,19 +433,20 @@ plotResponse <- function (riskProfObj,
 plotClusterSizes <- function (...) {
 
     riskprofs <- list(...)
-    length(riskprofs) >= 1 ||
-        stop("Supply at least one risk profile object.")
-    # dots <- substitute(list(...))[-1]
-    # names <- sapply(dots, deparse)
-    # names(riskprofs) <- names
+    if (is.null(names(riskprofs))) {
+        # Name models if ... arguments are not supplied with names
+        dots <- substitute(list(...))[-1]
+        names <- sapply(dots, deparse)
+        names(riskprofs) <- names
+    }
 
     data <- lapply(riskprofs, function(r) {
-        orderStat <- apply(r$risk, 2, median)
-        meanSortIndex <- order(orderStat, decreasing = F)
 
         nClusters <- r$riskProfClusObj$nClusters
-        clusterSizes <-
-            r$riskProfClusObj$clusterSizes[meanSortIndex]
+        clusterSizes <- r$riskProfClusObj$clusterSizes
+
+        meanSortIndex <- order(clusterSizes, decreasing = T)
+        clusterSizes <- clusterSizes[meanSortIndex]
 
         tibble::tibble(cluster = 1:nClusters,
                        clusterSize = clusterSizes)
@@ -455,11 +477,12 @@ plotClusterSizes <- function (...) {
 plotSimilarityMatrix <- function(...) {
 
     riskprofs <- list(...)
-    length(riskprofs) >= 1 ||
-        stop("Supply at least one risk profile object.")
-    # dots <- substitute(list(...))[-1]
-    # names <- sapply(dots, deparse)
-    # names(riskprofs) <- names
+    if (is.null(names(riskprofs))) {
+        # Name models if ... arguments are not supplied with names
+        dots <- substitute(list(...))[-1]
+        names <- sapply(dots, deparse)
+        names(riskprofs) <- names
+    }
 
     data <- lapply(riskprofs, function(d) {
 
@@ -519,15 +542,15 @@ plotSimilarityMatrix <- function(...) {
 plotVarSelectRho <- function(...) {
 
     riskprofs <- list(...)
-    length(riskprofs) >= 1 ||
-        stop("Supply at least one risk profile object.")
-    ## To do: add condition that names models if names not supplied:
-    # dots <- substitute(list(...))[-1]
-    # names <- sapply(dots, deparse)
-    # names(models) <- names
+    if (is.null(names(riskprofs))) {
+        # Name models if ... arguments are not supplied with names
+        dots <- substitute(list(...))[-1]
+        names <- sapply(dots, deparse)
+        names(riskprofs) <- names
+    }
 
     data <- lapply(riskprofs, function(m) {
-        rho <- summariseVarSelectRhoFromRiskProfObj(m)$rhoMean
+        rho <- tabulateVarSelectRho(m)$rhoMean
         ecd <- ecdf(rho)(rho) # ecdf(rho) returns a function!
         tibble::tibble(rho = rho, ecd = ecd)
     })
@@ -535,8 +558,8 @@ plotVarSelectRho <- function(...) {
     ggplot2::ggplot(data, ggplot2::aes(x = rho, y = ecd, col = model)) +
         ggplot2::geom_line() +
         ggplot2::labs(title = "ECDF of rho",
-                      x = "rho (mean for each variable)",
-                      y = "proportion of variables deselected")
+                      x = "rho (mean for each covariate)",
+                      y = "cumulative proportion of covariates")
 }
 
 #' Make a coda object PReMiuM samples
@@ -550,11 +573,12 @@ plotVarSelectRho <- function(...) {
 codaFromPremium <- function(global.parameter, ...) {
 
     models <- list(...)
-    length(models) >= 1 ||
-        stop("Supply at least one premium model.")
-    # dots <- substitute(list(...))[-1]
-    # names <- sapply(dots, deparse)
-    # names(models) <- names
+    if (is.null(names(models))) {
+        # Name models if ... arguments are not supplied with names
+        dots <- substitute(list(...))[-1]
+        names <- sapply(dots, deparse)
+        names(models) <- names
+    }
 
     data <- lapply(models, function(m) {
         for (i in 1:length(m)) {
@@ -576,14 +600,17 @@ codaFromPremium <- function(global.parameter, ...) {
 #' @return A matrix with a named column for each model and a named
 #'     row for each hyperparameter.
 getHyperparams <- function(...) {
-    # Must be a cleaner way to do this...
+
+    # Must be a cleaner way to do this... hyperparameters are only
+    # written to file if they differ from the defaults...
 
     models <- list(...)
-    length(models) >= 1 ||
-        stop("Supply at least one premium model.")
-    # dots <- substitute(list(...))[-1]
-    # names <- sapply(dots, deparse)
-    # names(models) <- names
+    if (is.null(names(models))) {
+        # Name models if ... arguments are not supplied with names
+        dots <- substitute(list(...))[-1]
+        names <- sapply(dots, deparse)
+        names(models) <- names
+    }
 
     data <- sapply(models, function(m) {
         for (i in 1:length(m)) {
@@ -618,7 +645,15 @@ renderPremiumReport <-
     function(...,
              filename = "premium_report.html",
              rmd.template = NULL) {
+
         premium.models <- list(...)
+        if (is.null(names(premium.models))) {
+            # Name models if ... arguments are not supplied with names
+            dots <- substitute(list(...))[-1]
+            names <- sapply(dots, deparse)
+            names(premium.models) <- names
+        }
+
         length(premium.models) >= 1 ||
             stop("Supply at least one premium model.")
         if (is.null(rmd.template)) {
