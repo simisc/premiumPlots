@@ -122,6 +122,12 @@ plotProfilesByCluster <- function (riskProfObj,
         facetting_layer <- list(ggplot2::facet_grid(cluster ~ .))
     }
 
+
+    ## Expected proportions: need to change this. Instead of an overall expectation,
+    ## this should be the empirical proportions for each covariate separately, to generalise
+    ## for the case where not all covariates are startified in the same way. Indicate these
+    ## for each covariate using a diamond shape (white on black surround) instead of geom_hline().
+    ## Proportions should be included as variables in covtab, not separate object...
     expected_proportions <-
         tapply(profileDF$mean, profileDF$category, mean)
     expected_proportions <-
@@ -135,14 +141,14 @@ plotProfilesByCluster <- function (riskProfObj,
                         alpha = fillColor != "avg"
                     )) +
         ggplot2::geom_bar(position = "fill", stat = "identity") +
-        ggplot2::geom_hline(yintercept = expected_proportions, linetype = "dashed") +
+        ggplot2::geom_hline(yintercept = expected_proportions, linetype = "dashed") + ## change this
         ggplot2::theme(axis.text.x = ggplot2::element_text(
             angle = 90,
             hjust = 1,
             vjust = 0.5
         )) +
         ggplot2::labs(
-            x = sprintf("Covariates (rho >= %.2f, top %i)",
+            x = sprintf("Covariates (rho >= %.2f, top %i)", ## Make rho in labels optional!
                         rhoMinimum,
                         length(unique(covtab$covrho))),
             y = "Proportion (by cluster)",
