@@ -3,8 +3,8 @@ Type: Package
 Title: Plot PReMiuM results and diagnostics
 Version: 0.1.0
 Author: Simon Schoenbuchner
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: Utility function to plot the results of models fitted
+Maintainer: https://github.com/simisc
+Description: Utility functions to plot the results of models fitted
     using the PReMiuM package, and to compare across MCMC chains from
     multiple PReMiuM models. Currently only supports models with a
     categorical outcome and discrete covariates.
