@@ -34,9 +34,11 @@ S. (2013) PReMiuM: An R package for Bayesian profile regression.}
 \item{covariate_labels}{Vector of strings giving labels for each
 level of the covariate, in the same order as \code{covariate_levels}.}
 
-\item{covariate_split}{A string (character vector of length one)
-that appears in a subset of covariate names. This is used to
-create a separate horizontal facets for this group of covariates.}
+\item{covariate_split}{A character vector. The first element appears
+in a subsets of covariates to be plotted in a separate horizontal
+facet. The second and third elements, if present, are facet labels
+for covariates that do and do not have meet this criterion, respectively,
+e.g. \code{c("_citr", "Citrullinated proteins", "Not citrullinated")}.}
 }
 \description{
 Plots the (discrete) covariate profiles, facetted by cluster.

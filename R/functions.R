@@ -70,9 +70,11 @@ tabulateVarSelectRho <- function (riskProfObj) {
 #'     (discrete) covariates, specifying the order of the facets.
 #' @param covariate_labels Vector of strings giving labels for each
 #'     level of the covariate, in the same order as \code{covariate_levels}.
-#' @param covariate_split A string (character vector of length one)
-#'     that appears in a subset of covariate names. This is used to
-#'     create a separate horizontal facets for this group of covariates.
+#' @param covariate_split A character vector. The first element appears
+#'     in a subsets of covariates to be plotted in a separate horizontal
+#'     facet. The second and third elements, if present, are facet labels
+#'     for covariates that do and do not have meet this criterion, respectively,
+#'     e.g. \code{c("_citr", "Citrullinated proteins", "Not citrullinated")}.
 plotProfilesByCluster <- function (riskProfObj,
                                    whichCovariates = NULL,
                                    rhoMinimum = NULL,
@@ -98,29 +100,27 @@ plotProfilesByCluster <- function (riskProfObj,
                                             labels = covariate_labels))
     }
 
+    covtab <- profileDF %>%
+        dplyr::group_by(cluster, category, covname, fillColor, rhoMean, rhoRank) %>%
+        dplyr::summarise(prop = mean(est)) %>%
+        dplyr::mutate(covrho = sprintf("%s (%.2f)", covname, rhoMean))
+
     if (!is.null(covariate_split)) {
-        covtab <- profileDF %>%
-            dplyr::mutate(type = stringr::str_extract(
-                covname,
-                covariate_split),
-                type = stringr::str_replace_na(
-                    type,
-                    sprintf("!%s", covariate_split))) %>%
-            dplyr::group_by(cluster, category, covname, fillColor, rhoMean, rhoRank, type)
+        if(length(covariate_split) < 3) {
+            covariate_split <- rep(covariate_split, 3 - length(covariate_split))
+            covariate_split <- c(covariate_split, sprintf("not %s", covariate_split[2]))
+        }
+        covtab <- covtab %>%
+            dplyr::mutate(type = stringr::str_detect(covname, covariate_split[1]),
+                          type = dplyr::recode(
+                              as.numeric(type), `1` = covariate_split[2], `0` = covariate_split[3]
+                          ))
         facetting_layer <- list(
             ggplot2::facet_grid(cluster ~ type, scales = "free_x", space = "free_x")
         )
     } else {
-        covtab <- profileDF %>%
-            dplyr::group_by(cluster, category, covname, fillColor, rhoMean, rhoRank)
-        facetting_layer <- list(
-            ggplot2::facet_grid(cluster ~ .)
-        )
+        facetting_layer <- list(ggplot2::facet_grid(cluster ~ .))
     }
-
-    covtab <- covtab %>%
-        dplyr::summarise(prop = mean(est)) %>%
-        dplyr::mutate(covrho = sprintf("%s (%.2f)", covname, rhoMean))
 
     expected_proportions <-
         tapply(profileDF$mean, profileDF$category, mean)
@@ -276,7 +276,10 @@ tabulateCovariateProfiles <- function (riskProfObj,
         nCategories <- nCategories[whichCovariates]
     }
 
-    meanSortIndex <- order(clusterSizes, decreasing = T)
+    orderStat <- apply(risk, 2, median)
+    # meanSortIndex <- order(orderStat, decreasing = F)
+    # meanSortIndex <- order(clusterSizes, decreasing = T)
+    meanSortIndex <- order(clusterSizes, orderStat, decreasing = T)
     clusterSizes <- clusterSizes[meanSortIndex]
     profile <- profile[, meanSortIndex, , ]
 
@@ -362,7 +365,10 @@ plotResponse <- function (riskProfObj,
         stop("Only for categorical response, use plotRiskProfile() for others...")
     }
 
-    meanSortIndex <- order(clusterSizes, decreasing = T)
+    orderStat <- apply(risk, 2, median)
+    # meanSortIndex <- order(orderStat, decreasing = F)
+    # meanSortIndex <- order(clusterSizes, decreasing = T)
+    meanSortIndex <- order(clusterSizes, orderStat, decreasing = T)
     clusterSizes <- clusterSizes[meanSortIndex]
     risk <- risk[, meanSortIndex, ]
 
@@ -445,7 +451,10 @@ plotClusterSizes <- function (...) {
         nClusters <- r$riskProfClusObj$nClusters
         clusterSizes <- r$riskProfClusObj$clusterSizes
 
-        meanSortIndex <- order(clusterSizes, decreasing = T)
+        orderStat <- apply(r$risk, 2, median)
+        # meanSortIndex <- order(orderStat, decreasing = F)
+        # meanSortIndex <- order(clusterSizes, decreasing = T)
+        meanSortIndex <- order(clusterSizes, orderStat, decreasing = T)
         clusterSizes <- clusterSizes[meanSortIndex]
 
         tibble::tibble(cluster = 1:nClusters,
