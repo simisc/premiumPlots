@@ -94,6 +94,19 @@ plotProfilesByCluster <- function (riskProfObj,
         rhoMinimum <- min(profileDF$rhoMean)
     }
 
+    empirical_proportions <- profileDF %>%
+        dplyr::group_by(category, covname) %>%
+        dplyr::summarise(x = mean(mean)) %>%
+        dplyr::group_by(covname) %>%
+        dplyr::arrange(category) %>%
+        dplyr::mutate(emp_propn = cumsum(x)) %>%
+        dplyr::filter(emp_propn < max(emp_propn)) %>%
+        dplyr::ungroup() %>%
+        dplyr::select(-x)
+
+    profileDF <- profileDF %>%
+        dplyr::left_join(empirical_proportions, by = c("covname", "category"))
+
     if (!is.null(covariate_levels) & !is.null(covariate_labels)) {
         profileDF <- profileDF %>%
             dplyr::mutate(category = factor(category,
@@ -102,7 +115,8 @@ plotProfilesByCluster <- function (riskProfObj,
     }
 
     covtab <- profileDF %>%
-        dplyr::group_by(cluster, category, covname, fillColor, rhoMean, rhoRank) %>%
+        dplyr::group_by(cluster, category, covname,
+                        fillColor, rhoMean, rhoRank, emp_propn) %>%
         dplyr::summarise(prop = mean(est)) %>%
         dplyr::mutate(covlab = ifelse(
             rho_in_xlabels,
@@ -126,17 +140,6 @@ plotProfilesByCluster <- function (riskProfObj,
         facetting_layer <- list(ggplot2::facet_grid(cluster ~ .))
     }
 
-
-    ## Expected proportions: need to change this. Instead of an overall expectation,
-    ## this should be the empirical proportions for each covariate separately, to generalise
-    ## for the case where not all covariates are startified in the same way. Indicate these
-    ## for each covariate using a diamond shape (white on black surround) instead of geom_hline().
-    ## Proportions should be included as variables in covtab, not separate object...
-    expected_proportions <-
-        tapply(profileDF$mean, profileDF$category, mean)
-    expected_proportions <-
-        cumsum(expected_proportions)[-length(expected_proportions)]
-
     xaxistitle = ifelse( # Make rho in labels optional
         rho_in_xlabels,
         sprintf("Covariates (rho >= %.2f, top %i)",
@@ -151,11 +154,11 @@ plotProfilesByCluster <- function (riskProfObj,
                         x = reorder(covlab, rhoRank),
                         y = prop,
                         fill = factor(category),
-                        # alpha = fillColor != "avg" # change so that only opaque if propn higher than expected.
                         alpha = fillColor == "high"
                     )) +
         ggplot2::geom_bar(position = "fill", stat = "identity") +
-        ggplot2::geom_hline(yintercept = expected_proportions, linetype = "dashed") + ## change this
+        ggplot2::geom_point(aes(y = emp_propn, group = category),
+                            col = "black", fill = "white", alpha = 1, shape = 18) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(
             angle = 90,
             hjust = 1,
@@ -166,8 +169,8 @@ plotProfilesByCluster <- function (riskProfObj,
             y = "Proportion (by cluster)",
             title = "Covariate profiles"
         ) +
-        ggplot2::scale_fill_discrete(name = "Marker\nprevalence\ncategory") +
-        ggplot2::scale_alpha_discrete(name = "Proportion\ndifferent\nfrom mean",
+        ggplot2::scale_fill_discrete(name = "Marker prevalence\ncategory (if proportion\ngreater than expected)") +
+        ggplot2::scale_alpha_discrete(guide = FALSE,
                                       range = c(0.25, 1)) +
         facetting_layer
 }
@@ -325,15 +328,7 @@ tabulateCovariateProfiles <- function (riskProfObj,
                 mean = probMean,
                 lower = probLower,
                 upper = probUpper
-            ) %>%
-                dplyr::mutate(
-                    fillColor = ifelse(
-                        lower > mean,
-                        "high",
-                        ifelse(upper < mean, "low", "avg")
-                    ),
-                    fillColor = as.character(fillColor)
-                )
+            )
 
             profileDF <-
                 tibble::tibble(cluster = rep(1:nClusters, each = nrow(probMat)),
@@ -348,7 +343,15 @@ tabulateCovariateProfiles <- function (riskProfObj,
     }
 
     dplyr::bind_rows(profDFlist, .id = "covname") %>%
-        dplyr::left_join(rhotab, by = c("covname" = "var"))
+        dplyr::left_join(rhotab, by = c("covname" = "var")) %>%
+        dplyr::mutate(
+            fillColor = ifelse(
+                lower > mean,
+                "high",
+                ifelse(upper < mean, "low", "avg")
+            ),
+            fillColor = as.character(fillColor)
+        )
 }
 
 #' Plot response profiles
