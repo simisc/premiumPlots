@@ -5,8 +5,8 @@
 \title{Plot covariate profiles by covariate}
 \usage{
 plotCovariateProfiles(riskProfObj, whichCovariates = NULL,
-  rhoMinimum = NULL, useProfileStar = TRUE, covariate_levels = NULL,
-  covariate_labels = NULL)
+  rhoMinimum = NULL, useProfileStar = TRUE, rho_in_xlabels = FALSE,
+  covariate_levels = NULL, covariate_labels = NULL)
 }
 \arguments{
 \item{riskProfObj}{Object of type \code{riskProfObj}, output of

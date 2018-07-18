@@ -49,7 +49,8 @@ tabulateVarSelectRho <- function (riskProfObj) {
 
 #' Plot covariate profiles by cluster
 #'
-#' Plots the (discrete) covariate profiles, facetted by cluster.
+#' Plots the (discrete) covariate profiles, facetted vertically by cluster and
+#'     (optionally) horizontally by some grouping (\code{split}) of the covariates.
 #' @export
 #' @param riskProfObj Object of type \code{riskProfObj}, output of
 #'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
@@ -66,33 +67,39 @@ tabulateVarSelectRho <- function (riskProfObj) {
 #'     selection procedure has been run. The definition of the star
 #'     profile is given in Liverani, S., Hastie, D. I. and Richardson,
 #'     S. (2013) PReMiuM: An R package for Bayesian profile regression.
-#' @param covariate_levels Vector of integer values taken by the
-#'     (discrete) covariates, specifying the order of the facets.
-#' @param covariate_labels Vector of strings giving labels for each
-#'     level of the covariate, in the same order as \code{covariate_levels}.
-#' @param covariate_split A character vector. The first element appears
-#'     in a subsets of covariates to be plotted in a separate horizontal
-#'     facet. The second and third elements, if present, are facet labels
-#'     for covariates that do and do not have meet this criterion, respectively,
-#'     e.g. \code{c("_citr", "Citrullinated proteins", "Not citrullinated")}.
+#' @param covariate_info Optional list of details about the covariates,
+#'     with (some of) the following named elements:
+#'     \describe{
+#'         \item{\code{title}:}{String describing the covariate, default
+#'         to "Covariate category".}
+#'         \item{\code{levels}:}{Vector of integer values taken by the
+#'         (discrete) covariates, specifying the order of the facets.}
+#'         \item{\code{labels}:}{Vector of strings giving labels for each
+#'         level of the covariate, in the same order as \code{levels}.}
+#'         \item{\code{split}:}{A character vector specifying the covariate
+#'         grouping for horizontal facetting. The first element appears
+#'         in a subsets of covariates to be plotted in a separate horizontal
+#'         facet. The second and third elements, if present, are facet labels
+#'         for covariates that do and do not have meet this criterion, respectively,
+#'         e.g. \code{c("_citr", "Citrullinated", "Not citrullinated")}.}
+#'     }
 plotProfilesByCluster <- function (riskProfObj,
                                    whichCovariates = NULL,
                                    rhoMinimum = NULL,
                                    useProfileStar = TRUE,
                                    rho_in_xlabels = FALSE,
-                                   covariate_levels = NULL,
-                                   covariate_labels = NULL,
-                                   covariate_split = NULL) {
+                                   covariate_info = list(title = NULL,
+                                                         levels = NULL,
+                                                         labels = NULL,
+                                                         split = NULL)
+                                   ) {
+
     profileDF <- tabulateCovariateProfiles(
         riskProfObj = riskProfObj,
         whichCovariates = whichCovariates,
         rhoMinimum = rhoMinimum,
         useProfileStar = useProfileStar
     )
-
-    if (is.null(rhoMinimum)) {
-        rhoMinimum <- min(profileDF$rhoMean)
-    }
 
     empirical_proportions <- profileDF %>%
         dplyr::group_by(category, covname) %>%
@@ -104,34 +111,33 @@ plotProfilesByCluster <- function (riskProfObj,
         dplyr::ungroup() %>%
         dplyr::select(-x)
 
-    profileDF <- profileDF %>%
-        dplyr::left_join(empirical_proportions, by = c("covname", "category"))
-
-    if (!is.null(covariate_levels) & !is.null(covariate_labels)) {
-        profileDF <- profileDF %>%
-            dplyr::mutate(category = factor(category,
-                                            levels = covariate_levels,
-                                            labels = covariate_labels))
-    }
-
     covtab <- profileDF %>%
+        dplyr::left_join(empirical_proportions, by = c("covname", "category")) %>%
         dplyr::group_by(cluster, category, covname,
                         fillColor, rhoMean, rhoRank, emp_propn) %>%
         dplyr::summarise(prop = mean(est)) %>%
         dplyr::mutate(covlab = ifelse(
             rho_in_xlabels,
             sprintf("%s (%.2f)", covname, rhoMean),
-            covname))
+            covname)) %>%
+        dplyr::ungroup()
 
-    if (!is.null(covariate_split)) {
-        if(length(covariate_split) < 3) {
-            covariate_split <- rep(covariate_split, 3 - length(covariate_split))
-            covariate_split <- c(covariate_split, sprintf("not %s", covariate_split[2]))
+    if (!is.null(covariate_info$levels) & !is.null(covariate_info$labels)) {
+        covtab <- covtab %>%
+            dplyr::mutate(category = factor(category,
+                                            levels = covariate_info$levels,
+                                            labels = covariate_info$labels))
+    }
+
+    if (!is.null(covariate_info$split)) {
+        if(length(covariate_info$split) < 3) {
+            covariate_info$split <- rep(covariate_info$split, 3 - length(covariate_info$split))
+            covariate_info$split <- c(covariate_info$split, sprintf("not %s", covariate_info$split[2]))
         }
         covtab <- covtab %>%
-            dplyr::mutate(type = stringr::str_detect(covname, covariate_split[1]),
+            dplyr::mutate(type = stringr::str_detect(covname, covariate_info$split[1]),
                           type = dplyr::recode(
-                              as.numeric(type), `1` = covariate_split[2], `0` = covariate_split[3]
+                              as.numeric(type), `1` = covariate_info$split[2], `0` = covariate_info$split[3]
                           ))
         facetting_layer <- list(
             ggplot2::facet_grid(cluster ~ type, scales = "free_x", space = "free_x")
@@ -140,12 +146,24 @@ plotProfilesByCluster <- function (riskProfObj,
         facetting_layer <- list(ggplot2::facet_grid(cluster ~ .))
     }
 
+    rhoMinimum <- ifelse(
+        is.null(rhoMinimum),
+        min(covtab$rhoMean),
+        rhoMinimum
+    )
+
+    covariate_info$title <- ifelse(
+        is.null(covariate_info$title),
+        "Covariate\ncategory",
+        covariate_info$title
+    )
+
     xaxistitle = ifelse( # Make rho in labels optional
         rho_in_xlabels,
-        sprintf("Covariates (rho >= %.2f, top %i)",
+        sprintf("Covariate (rho >= %.2f, top %i)",
                 rhoMinimum,
                 length(unique(covtab$covlab))),
-        sprintf("Covariates (top %i)",
+        sprintf("Covariate (top %i)",
                 length(unique(covtab$covlab)))
     )
 
@@ -167,9 +185,10 @@ plotProfilesByCluster <- function (riskProfObj,
         ggplot2::labs(
             x = xaxistitle,
             y = "Proportion (by cluster)",
-            title = "Covariate profiles"
+            title = "Covariate profiles",
+            subtitle = "Covariate categories are plotted with dark fill if they are more prevalent within the cluster than overall.\nOverall (empirical) proportions in each covariate category are indicated by black diamonds."
         ) +
-        ggplot2::scale_fill_discrete(name = "Marker prevalence\ncategory (if proportion\ngreater than expected)") +
+        ggplot2::scale_fill_discrete(name = covariate_info$title) +
         ggplot2::scale_alpha_discrete(guide = FALSE,
                                       range = c(0.25, 1)) +
         facetting_layer

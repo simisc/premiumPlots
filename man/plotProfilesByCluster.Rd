@@ -5,8 +5,9 @@
 \title{Plot covariate profiles by cluster}
 \usage{
 plotProfilesByCluster(riskProfObj, whichCovariates = NULL,
-  rhoMinimum = NULL, useProfileStar = TRUE, covariate_levels = NULL,
-  covariate_labels = NULL, covariate_split = NULL)
+  rhoMinimum = NULL, useProfileStar = TRUE, rho_in_xlabels = FALSE,
+  covariate_info = list(title = NULL, levels = NULL, labels = NULL, split =
+  NULL))
 }
 \arguments{
 \item{riskProfObj}{Object of type \code{riskProfObj}, output of
@@ -28,18 +29,24 @@ selection procedure has been run. The definition of the star
 profile is given in Liverani, S., Hastie, D. I. and Richardson,
 S. (2013) PReMiuM: An R package for Bayesian profile regression.}
 
-\item{covariate_levels}{Vector of integer values taken by the
-(discrete) covariates, specifying the order of the facets.}
-
-\item{covariate_labels}{Vector of strings giving labels for each
-level of the covariate, in the same order as \code{covariate_levels}.}
-
-\item{covariate_split}{A character vector. The first element appears
-in a subsets of covariates to be plotted in a separate horizontal
-facet. The second and third elements, if present, are facet labels
-for covariates that do and do not have meet this criterion, respectively,
-e.g. \code{c("_citr", "Citrullinated proteins", "Not citrullinated")}.}
+\item{covariate_info}{Optional list of details about the covariates,
+with (some of) the following named elements:
+\describe{
+    \item{\code{title}:}{String describing the covariate, default
+    to "Covariate category".}
+    \item{\code{levels}:}{Vector of integer values taken by the
+    (discrete) covariates, specifying the order of the facets.}
+    \item{\code{labels}:}{Vector of strings giving labels for each
+    level of the covariate, in the same order as \code{levels}.}
+    \item{\code{split}:}{A character vector specifying the covariate
+    grouping for horizontal facetting. The first element appears
+    in a subsets of covariates to be plotted in a separate horizontal
+    facet. The second and third elements, if present, are facet labels
+    for covariates that do and do not have meet this criterion, respectively,
+    e.g. \code{c("_citr", "Citrullinated", "Not citrullinated")}.}
+}}
 }
 \description{
-Plots the (discrete) covariate profiles, facetted by cluster.
+Plots the (discrete) covariate profiles, facetted vertically by cluster and
+    (optionally) horizontally by some grouping (\code{split}) of the covariates.
 }
