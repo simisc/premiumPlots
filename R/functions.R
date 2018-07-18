@@ -79,6 +79,7 @@ plotProfilesByCluster <- function (riskProfObj,
                                    whichCovariates = NULL,
                                    rhoMinimum = NULL,
                                    useProfileStar = TRUE,
+                                   rho_in_xlabels = FALSE,
                                    covariate_levels = NULL,
                                    covariate_labels = NULL,
                                    covariate_split = NULL) {
@@ -103,7 +104,10 @@ plotProfilesByCluster <- function (riskProfObj,
     covtab <- profileDF %>%
         dplyr::group_by(cluster, category, covname, fillColor, rhoMean, rhoRank) %>%
         dplyr::summarise(prop = mean(est)) %>%
-        dplyr::mutate(covrho = sprintf("%s (%.2f)", covname, rhoMean))
+        dplyr::mutate(covlab = ifelse(
+            rho_in_xlabels,
+            sprintf("%s (%.2f)", covname, rhoMean),
+            covname))
 
     if (!is.null(covariate_split)) {
         if(length(covariate_split) < 3) {
@@ -133,9 +137,18 @@ plotProfilesByCluster <- function (riskProfObj,
     expected_proportions <-
         cumsum(expected_proportions)[-length(expected_proportions)]
 
+    xaxistitle = ifelse( # Make rho in labels optional
+        rho_in_xlabels,
+        sprintf("Covariates (rho >= %.2f, top %i)",
+                rhoMinimum,
+                length(unique(covtab$covlab))),
+        sprintf("Covariates (top %i)",
+                length(unique(covtab$covlab)))
+    )
+
     ggplot2::ggplot(covtab,
                     ggplot2::aes(
-                        x = reorder(covrho, rhoRank),
+                        x = reorder(covlab, rhoRank),
                         y = prop,
                         fill = factor(category),
                         alpha = fillColor != "avg"
@@ -148,9 +161,7 @@ plotProfilesByCluster <- function (riskProfObj,
             vjust = 0.5
         )) +
         ggplot2::labs(
-            x = sprintf("Covariates (rho >= %.2f, top %i)", ## Make rho in labels optional!
-                        rhoMinimum,
-                        length(unique(covtab$covrho))),
+            x = xaxistitle,
             y = "Proportion (by cluster)",
             title = "Covariate profiles"
         ) +
@@ -188,6 +199,7 @@ plotCovariateProfiles <- function (riskProfObj,
                                    whichCovariates = NULL,
                                    rhoMinimum = NULL,
                                    useProfileStar = TRUE,
+                                   rho_in_xlabels = FALSE,
                                    covariate_levels = NULL,
                                    covariate_labels = NULL) {
     profileDF <- tabulateCovariateProfiles(
@@ -208,7 +220,10 @@ plotCovariateProfiles <- function (riskProfObj,
     }
 
     profileDF <- profileDF %>%
-        dplyr::mutate(covrho = sprintf("%s (%.2f)", covname, rhoMean))
+        dplyr::mutate(covlab = ifelse(
+            rho_in_xlabels,
+            sprintf("%s (%.2f)", covname, rhoMean),
+            covname))
 
     cols <- c(high = "#CC0033",
               low = "#0066CC",
@@ -226,7 +241,7 @@ plotCovariateProfiles <- function (riskProfObj,
         ggplot2::theme(legend.position = "none",
                        strip.text = ggplot2::element_text(size = 6)) +
         ggplot2::labs(x = "Cluster", title = "Covariate profiles", y = "Probability") +
-        ggplot2::facet_grid(factor(category) ~ reorder(covrho, rhoRank))
+        ggplot2::facet_grid(factor(category) ~ reorder(covlab, rhoRank))
 }
 
 #' @export
