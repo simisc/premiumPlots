@@ -151,7 +151,8 @@ plotProfilesByCluster <- function (riskProfObj,
                         x = reorder(covlab, rhoRank),
                         y = prop,
                         fill = factor(category),
-                        alpha = fillColor != "avg"
+                        # alpha = fillColor != "avg" # change so that only opaque if propn higher than expected.
+                        alpha = fillColor == "high"
                     )) +
         ggplot2::geom_bar(position = "fill", stat = "identity") +
         ggplot2::geom_hline(yintercept = expected_proportions, linetype = "dashed") + ## change this
