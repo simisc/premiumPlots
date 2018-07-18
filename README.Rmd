@@ -1,21 +1,30 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-premiumPlots
-============
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-"
+)
+```
+
+# premiumPlots
 
 Plot results and diagnostics for profile regression models fitted using the `PReMiuM` package (Liverani et al 2013).
 
-Installation
-------------
+## Installation
 
 You can install premiumPlots from github with:
 
-``` r
+```{r gh-installation, eval = FALSE}
 # install.packages("devtools")
 devtools::install_github("simisc/premiumPlots")
 ```
 
-Example
--------
+## Example
 
 To do.
