@@ -517,7 +517,8 @@ plotClusterSizes <- function (...) {
         ggplot2::labs(title = "Cluster size",
                       y = "Number of subjects",
                       x = "Cluster") +
-        ggplot2::expand_limits(y = 0)
+        ggplot2::expand_limits(y = 0) +
+        scale_colour_discrete(guide = length(riskprofs) > 1)
 }
 
 #' Plot similarity matrix
