@@ -242,11 +242,11 @@ plotCovariateProfiles <- function (riskProfObj,
                                             labels = covariate_labels))
     }
 
-    profileDF <- profileDF %>%
-        dplyr::mutate(covlab = ifelse(
-            rho_in_xlabels,
-            sprintf("%s (%.2f)", covname, rhoMean),
-            covname))
+    if (rho_in_xlabels) {
+        profileDF$covlab <- sprintf("%s (%.2f)", profileDF$covname, profileDF$rhoMean)
+    } else {
+        profileDF$covlab <- profileDF$covname
+    }
 
     cols <- c(high = "#CC0033",
               low = "#0066CC",
@@ -470,7 +470,7 @@ plotResponse <- function (riskProfObj,
         ggplot2::scale_fill_manual(values = cols) +
         ggplot2::scale_color_manual(values = cols) +
         ggplot2::theme(legend.position = "none") +
-        ggplot2::labs(x = "Cluster", title = "Response risk", y = "Probability") +
+        ggplot2::labs(x = "Cluster", title = "Response profile", y = "Probability") +
         ggplot2::facet_grid(. ~ factor(category))
 }
 
