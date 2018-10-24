@@ -34,7 +34,7 @@ tabulateVarSelectRho <- function (riskProfObj) {
 
     # Temporary work-around for models fitted without variable selection
     if (!varSelect) {
-        warning("Model fitted without variable selection, returning rho=1 for all covariates.")
+        warning("Model fitted without variable selection, assuming rho=1 for all covariates.")
         return(
             tibble::tibble(
                 var = covNames,
@@ -611,10 +611,42 @@ plotVarSelectRho <- function(...) {
                       y = "cumulative proportion of covariates")
 }
 
+#' Plot distribution of \code{rho} per covariate
+#'
+#' Plots the mean, median and CI of the variable selection
+#'     parameter \code{rho} for each covariate.
+#' @export
+#' @param ... Object(s) of type \code{riskProfObj}, output of
+#'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
+plotRhoDistributions <- function(...) {
+
+    riskprofs <- list(...)
+    if (is.null(names(riskprofs))) {
+        # Name models if ... arguments are not supplied with names
+        dots <- substitute(list(...))[-1]
+        names <- sapply(dots, deparse)
+        names(riskprofs) <- names
+    }
+
+    data <- lapply(riskprofs, function(m) {
+        tabulateVarSelectRho(m)
+    })
+    data <- dplyr::bind_rows(data, .id = "model") %>%
+        dplyr::rename(mean = rhoMean, median = rhoMedian) %>%
+        tidyr::gather(centre, value, mean, median)
+    ggplot2::ggplot(data, ggplot2::aes(x = factor(var), col = model, group = model)) +
+        ggplot2::geom_linerange(ggplot2::aes(ymin = rhoLowerCI, ymax = rhoUpperCI), position = ggplot2::position_dodge(width = 0.25)) +
+        ggplot2::geom_point(ggplot2::aes(y = value, shape = centre), position = ggplot2::position_dodge(width = 0.25)) +
+        ggplot2::labs(x = "Covariate", y = "rho") +
+        ggplot2::scale_shape_manual(name = NULL,
+                                    values = c(mean = 16, median = 4))
+}
+
 #' Make a coda object PReMiuM samples
 #'
-#' Assemble MCMC samples from \code{link[PReMiuM]{profRegr}} into
+#' Assemble MCMC samples from \code{\link[PReMiuM]{profRegr}} into
 #'     a \code{\link[coda]{mcmc.list}} object with multiple chains.
+#'     Useful for convergence diagnositics.
 #' @export
 #' @param ... Object(s) of type \code{runInfoObj}, output of
 #'     \code{\link[PReMiuM]{profRegr}}.

@@ -14,6 +14,7 @@ codaFromPremium(global.parameter, ...)
 A \code{\link[coda]{mcmc.list}}.
 }
 \description{
-Assemble MCMC samples from \code{link[PReMiuM]{profRegr}} into
+Assemble MCMC samples from \code{\link[PReMiuM]{profRegr}} into
     a \code{\link[coda]{mcmc.list}} object with multiple chains.
+    Useful for convergence diagnositics.
 }
