@@ -185,7 +185,8 @@ plotProfilesByCluster <- function (riskProfObj,
             x = "Covariate",
             y = "Proportion (by cluster)",
             title = "Covariate profiles",
-            subtitle = "Covariate categories are plotted with dark fill if they are more prevalent within the cluster than overall.\nOverall (empirical) proportions in each covariate category are indicated by black pips"
+            subtitle = "Black pips: empirical proportions in each covariate category.\n
+                        Dark fill: category more prevalent within cluster than overall."
         ) +
         ggplot2::scale_fill_discrete(name = covariate_info$title) +
         ggplot2::scale_alpha_discrete(guide = FALSE,
