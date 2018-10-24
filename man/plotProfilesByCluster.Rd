@@ -5,9 +5,9 @@
 \title{Plot covariate profiles by cluster}
 \usage{
 plotProfilesByCluster(riskProfObj, whichCovariates = NULL,
-  rhoMinimum = NULL, useProfileStar = TRUE, rho_in_xlabels = FALSE,
-  covariate_info = list(title = NULL, levels = NULL, labels = NULL, split =
-  NULL))
+  rhoMinimum = NULL, useProfileStar = TRUE,
+  covariate_info = list(title = "Covariate\\ncategory", levels = NULL,
+  labels = NULL, split = NULL))
 }
 \arguments{
 \item{riskProfObj}{Object of type \code{riskProfObj}, output of
@@ -15,16 +15,16 @@ plotProfilesByCluster(riskProfObj, whichCovariates = NULL,
 
 \item{whichCovariates}{A vector of indices or a vector of strings
 corresponding to the covariates that are to be displayed. If
-a single integer, this is intepreted as the 'top N' covariates,
+a single integer, this is interpreted as the 'top N' covariates,
 as ranked by their value of \code{rho} (requires the model to
 have been fitted with variable selection).}
 
-\item{rhoMinimum}{As an alternative to \code{whichCovariates}, plot
+\item{rhoMinimum}{As an alternative to \code{whichCovariates},
 plot all covariates whose value of \code{rho} is greater than
 some threshold (requires the model to have been fitted with
 variable selection).}
 
-\item{useProfileStar}{o be set equal to TRUE only if a variable
+\item{useProfileStar}{To be set equal to TRUE only if a variable
 selection procedure has been run. The definition of the star
 profile is given in Liverani, S., Hastie, D. I. and Richardson,
 S. (2013) PReMiuM: An R package for Bayesian profile regression.}
@@ -40,13 +40,15 @@ with (some of) the following named elements:
     level of the covariate, in the same order as \code{levels}.}
     \item{\code{split}:}{A character vector specifying the covariate
     grouping for horizontal facetting. The first element appears
-    in a subsets of covariates to be plotted in a separate horizontal
+    in a subset of covariates to be plotted in a separate horizontal
     facet. The second and third elements, if present, are facet labels
-    for covariates that do and do not have meet this criterion, respectively,
+    for covariates that do and do not meet this criterion, respectively,
     e.g. \code{c("_citr", "Citrullinated", "Not citrullinated")}.}
 }}
 }
 \description{
 Plots the (discrete) covariate profiles, facetted vertically by cluster and
     (optionally) horizontally by some grouping (\code{split}) of the covariates.
+    Covariate categories that are more common within a cluster than they are
+    overall are shaded dark; those that are not are shaded light.
 }

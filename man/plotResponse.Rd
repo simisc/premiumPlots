@@ -4,7 +4,8 @@
 \alias{plotResponse}
 \title{Plot response profiles}
 \usage{
-plotResponse(riskProfObj, response_levels = NULL, response_labels = NULL)
+plotResponse(riskProfObj, response_levels = NULL,
+  response_labels = NULL)
 }
 \arguments{
 \item{riskProfObj}{Object of type \code{riskProfObj}, output of

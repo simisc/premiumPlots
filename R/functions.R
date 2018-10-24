@@ -1,3 +1,12 @@
+#' Pipe
+#'
+#' Imported from \code{\link[magrittr]{pipe}}
+#' @importFrom magrittr %>%
+#' @name %>%
+#' @rdname pipe
+#' @export
+NULL
+
 #' Summarise \code{rho}
 #'
 #' Summarise the posterior distribution of the variable selection
@@ -22,6 +31,20 @@ tabulateVarSelectRho <- function (riskProfObj) {
     for (i in 1:length(clusObjRunInfoObj))
         assign(names(clusObjRunInfoObj)[i],
                clusObjRunInfoObj[[i]])
+
+    # Temporary work-around for models fitted without variable selection
+    if (!varSelect) {
+        warning("Model fitted without variable selection, returning rho=1 for all covariates.")
+        return(
+            tibble::tibble(
+                var = covNames,
+                rhoMean = 1,
+                rhoMedian = 1,
+                rhoLowerCI = 1,
+                rhoUpperCI = 1,
+                rhoRank = 1)
+        )
+    }
 
     rhoFileName <-
         file.path(directoryPath, paste(fileStem, "_rho.txt", sep = ""))
@@ -51,19 +74,21 @@ tabulateVarSelectRho <- function (riskProfObj) {
 #'
 #' Plots the (discrete) covariate profiles, facetted vertically by cluster and
 #'     (optionally) horizontally by some grouping (\code{split}) of the covariates.
+#'     Covariate categories that are more common within a cluster than they are
+#'     overall are shaded dark; those that are not are shaded light.
 #' @export
 #' @param riskProfObj Object of type \code{riskProfObj}, output of
 #'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
 #' @param whichCovariates A vector of indices or a vector of strings
 #'     corresponding to the covariates that are to be displayed. If
-#'     a single integer, this is intepreted as the 'top N' covariates,
+#'     a single integer, this is interpreted as the 'top N' covariates,
 #'     as ranked by their value of \code{rho} (requires the model to
 #'     have been fitted with variable selection).
-#' @param rhoMinimum As an alternative to \code{whichCovariates}, plot
+#' @param rhoMinimum As an alternative to \code{whichCovariates},
 #'     plot all covariates whose value of \code{rho} is greater than
 #'     some threshold (requires the model to have been fitted with
 #'     variable selection).
-#' @param useProfileStar o be set equal to TRUE only if a variable
+#' @param useProfileStar To be set equal to TRUE only if a variable
 #'     selection procedure has been run. The definition of the star
 #'     profile is given in Liverani, S., Hastie, D. I. and Richardson,
 #'     S. (2013) PReMiuM: An R package for Bayesian profile regression.
@@ -78,17 +103,16 @@ tabulateVarSelectRho <- function (riskProfObj) {
 #'         level of the covariate, in the same order as \code{levels}.}
 #'         \item{\code{split}:}{A character vector specifying the covariate
 #'         grouping for horizontal facetting. The first element appears
-#'         in a subsets of covariates to be plotted in a separate horizontal
+#'         in a subset of covariates to be plotted in a separate horizontal
 #'         facet. The second and third elements, if present, are facet labels
-#'         for covariates that do and do not have meet this criterion, respectively,
+#'         for covariates that do and do not meet this criterion, respectively,
 #'         e.g. \code{c("_citr", "Citrullinated", "Not citrullinated")}.}
 #'     }
 plotProfilesByCluster <- function (riskProfObj,
                                    whichCovariates = NULL,
                                    rhoMinimum = NULL,
                                    useProfileStar = TRUE,
-                                   rho_in_xlabels = FALSE,
-                                   covariate_info = list(title = NULL,
+                                   covariate_info = list(title = "Covariate\ncategory",
                                                          levels = NULL,
                                                          labels = NULL,
                                                          split = NULL)
@@ -100,6 +124,13 @@ plotProfilesByCluster <- function (riskProfObj,
         rhoMinimum = rhoMinimum,
         useProfileStar = useProfileStar
     )
+
+    if (!is.null(covariate_info$levels) & !is.null(covariate_info$labels)) {
+        profileDF <- profileDF %>%
+            dplyr::mutate(category = factor(category,
+                                            levels = covariate_info$levels,
+                                            labels = covariate_info$labels))
+    }
 
     empirical_proportions <- profileDF %>%
         dplyr::group_by(category, covname) %>%
@@ -116,18 +147,7 @@ plotProfilesByCluster <- function (riskProfObj,
         dplyr::group_by(cluster, category, covname,
                         fillColor, rhoMean, rhoRank, emp_propn) %>%
         dplyr::summarise(prop = mean(est)) %>%
-        dplyr::mutate(covlab = ifelse(
-            rho_in_xlabels,
-            sprintf("%s (%.2f)", covname, rhoMean),
-            covname)) %>%
         dplyr::ungroup()
-
-    if (!is.null(covariate_info$levels) & !is.null(covariate_info$labels)) {
-        covtab <- covtab %>%
-            dplyr::mutate(category = factor(category,
-                                            levels = covariate_info$levels,
-                                            labels = covariate_info$labels))
-    }
 
     if (!is.null(covariate_info$split)) {
         if(length(covariate_info$split) < 3) {
@@ -146,36 +166,15 @@ plotProfilesByCluster <- function (riskProfObj,
         facetting_layer <- list(ggplot2::facet_grid(cluster ~ .))
     }
 
-    rhoMinimum <- ifelse(
-        is.null(rhoMinimum),
-        min(covtab$rhoMean),
-        rhoMinimum
-    )
-
-    covariate_info$title <- ifelse(
-        is.null(covariate_info$title),
-        "Covariate\ncategory",
-        covariate_info$title
-    )
-
-    xaxistitle = ifelse( # Make rho in labels optional
-        rho_in_xlabels,
-        sprintf("Covariate (rho >= %.2f, top %i)",
-                rhoMinimum,
-                length(unique(covtab$covlab))),
-        sprintf("Covariate (top %i)",
-                length(unique(covtab$covlab)))
-    )
-
     ggplot2::ggplot(covtab,
                     ggplot2::aes(
-                        x = reorder(covlab, rhoRank),
+                        x = reorder(covname, rhoRank),
                         y = prop,
                         fill = factor(category),
                         alpha = fillColor == "high"
                     )) +
         ggplot2::geom_bar(position = "fill", stat = "identity") +
-        ggplot2::geom_point(aes(y = emp_propn, group = category),
+        ggplot2::geom_point(ggplot2::aes(y = emp_propn, group = category),
                             col = "black", fill = "white", alpha = 1, shape = 18) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(
             angle = 90,
@@ -183,10 +182,10 @@ plotProfilesByCluster <- function (riskProfObj,
             vjust = 0.5
         )) +
         ggplot2::labs(
-            x = xaxistitle,
+            x = "Covariate",
             y = "Proportion (by cluster)",
             title = "Covariate profiles",
-            subtitle = "Covariate categories are plotted with dark fill if they are more prevalent within the cluster than overall.\nOverall (empirical) proportions in each covariate category are indicated by black diamonds."
+            subtitle = "Covariate categories are plotted with dark fill if they are more prevalent within the cluster than overall.\nOverall (empirical) proportions in each covariate category are indicated by black pips"
         ) +
         ggplot2::scale_fill_discrete(name = covariate_info$title) +
         ggplot2::scale_alpha_discrete(guide = FALSE,
@@ -222,7 +221,6 @@ plotCovariateProfiles <- function (riskProfObj,
                                    whichCovariates = NULL,
                                    rhoMinimum = NULL,
                                    useProfileStar = TRUE,
-                                   rho_in_xlabels = FALSE,
                                    covariate_levels = NULL,
                                    covariate_labels = NULL) {
     profileDF <- tabulateCovariateProfiles(
@@ -242,12 +240,6 @@ plotCovariateProfiles <- function (riskProfObj,
                                             labels = covariate_labels))
     }
 
-    if (rho_in_xlabels) {
-        profileDF$covlab <- sprintf("%s (%.2f)", profileDF$covname, profileDF$rhoMean)
-    } else {
-        profileDF$covlab <- profileDF$covname
-    }
-
     cols <- c(high = "#CC0033",
               low = "#0066CC",
               avg = "#33CC66")
@@ -264,7 +256,7 @@ plotCovariateProfiles <- function (riskProfObj,
         ggplot2::theme(legend.position = "none",
                        strip.text = ggplot2::element_text(size = 6)) +
         ggplot2::labs(x = "Cluster", title = "Covariate profiles", y = "Probability") +
-        ggplot2::facet_grid(factor(category) ~ reorder(covlab, rhoRank))
+        ggplot2::facet_grid(factor(category) ~ reorder(covname, rhoRank))
 }
 
 #' @export
@@ -292,21 +284,23 @@ tabulateCovariateProfiles <- function (riskProfObj,
             Use plotRiskProfile() for Normal- or Mixed-covariate models."
         )
 
-    if (useProfileStar) {
+    if (useProfileStar & varSelect) {
         profile <- profileStar
     }
+
+    ### HERE: ADD CONDITION ON varSelect==TRUE ###
 
     rhotab <- tabulateVarSelectRho(riskProfObj)
 
     if (is.null(whichCovariates) & !is.null(rhoMinimum)) {
         # If specify minimum rho value instead of which covariates
-        rhotab <- filter(rhotab, rhoMean >= rhoMinimum)
+        rhotab <- dplyr::filter(rhotab, rhoMean >= rhoMinimum)
         whichCovariates <- rhotab$var
     }
 
     if (length(whichCovariates) == 1) {
         # If whichCovariates is a single integer, treat it as the 'top N'
-        rhotab <- arrange(rhotab, rhoRank)
+        rhotab <- dplyr::arrange(rhotab, rhoRank)
         whichCovariates <- rhotab$var[1:whichCovariates]
     }
 
