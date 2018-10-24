@@ -136,7 +136,7 @@ plotProfilesByCluster <- function (riskProfObj,
         dplyr::group_by(category, covname) %>%
         dplyr::summarise(x = mean(mean)) %>%
         dplyr::group_by(covname) %>%
-        dplyr::arrange(category) %>%
+        dplyr::arrange(dplyr::desc(category)) %>%
         dplyr::mutate(emp_propn = cumsum(x)) %>%
         dplyr::filter(emp_propn < max(emp_propn)) %>%
         dplyr::ungroup() %>%
