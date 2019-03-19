@@ -312,7 +312,12 @@ tabulateCovariateProfiles <- function (riskProfObj,
     clusterSizes <- clusterSizes[sortIndex]
     profile <- profile[, sortIndex, , , drop = FALSE]
 
-    profDFlist <- purrr::map_dfr(1:nCovariates, function(j) {
+    covOrder <- tibble::tibble(
+        covname = covNames,
+        covOrder = 1:nCovariates
+    )
+
+    purrr::map_dfr(1:nCovariates, function(j) {
 
         purrr::map_dfr(1:nCategories[j], function(k) {
 
@@ -334,24 +339,15 @@ tabulateCovariateProfiles <- function (riskProfObj,
             tibble::tibble(cluster = rep(1:nClusters, each = nrow(probMat)),
                            est = c(probMat)) %>%
                 dplyr::left_join(clusterDF, by = "cluster")
-        }) %>%
+            }) %>%
             dplyr::mutate(covname = covNames[j])
-    })
-
-    covOrder <- tibble::tibble(
-        covname = covNames,
-        covOrder = 1:nCovariates
-    )
-
-    profDFlist %>%
+        }) %>%
         dplyr::left_join(covOrder, by = "covname") %>%
         dplyr::mutate(
             fillColor = dplyr::case_when(
                 lower > mean ~ "high",
                 upper < mean ~ "low",
-                TRUE ~ "avg"
-            )
-        )
+                TRUE ~ "avg"))
 }
 
 #' Plot response profiles
@@ -395,9 +391,8 @@ plotResponse <- function (riskProfObj,
     clusterSizes <- clusterSizes[sortIndex]
     risk <- risk[, sortIndex, ]
 
-    miniDFlist = list() # still growing lists, not ideal...
+    profileDF <- purrr::map_dfr(1:nCategoriesY, function(k) {
 
-    for (k in 1:nCategoriesY) {
         probMat <- risk[, , k] # 2D matrix for categ. k
         probMeans <- apply(probMat, 2, mean, trim = 0.005)
 
@@ -411,22 +406,17 @@ plotResponse <- function (riskProfObj,
             mean = probMean,
             lower = probLower,
             upper = probUpper
-        ) %>%
-            dplyr::mutate(
-                fillColor = ifelse(lower > mean, "high",
-                                   ifelse(upper < mean, "low", "avg")),
-                fillColor = as.character(fillColor)
-            )
+        )
 
-        profileDF <-
-            tibble::tibble(cluster = rep(1:nClusters, each = nrow(probMat)),
-                           est = c(probMat)) %>%
+        tibble::tibble(cluster = rep(1:nClusters, each = nrow(probMat)),
+                       est = c(probMat)) %>%
             dplyr::left_join(clusterDF, by = "cluster")
-
-        miniDFlist[[k]] <- profileDF
-    }
-
-    profileDF <- dplyr::bind_rows(miniDFlist)
+        }) %>%
+        dplyr::mutate(
+            fillColor = dplyr::case_when(
+                lower > mean ~ "high",
+                upper < mean ~ "low",
+                TRUE ~ "avg"))
 
     if (!is.null(response_levels) & !is.null(response_labels)) {
         profileDF <- profileDF %>%
@@ -469,7 +459,7 @@ plotClusterSizes <- function (...) {
         names(riskprofs) <- names
     }
 
-    data <- lapply(riskprofs, function(r) {
+    data <- purrr::map_dfr(riskprofs, function(r) {
 
         nClusters <- r$riskProfClusObj$nClusters
         clusterSizes <- r$riskProfClusObj$clusterSizes
@@ -481,14 +471,9 @@ plotClusterSizes <- function (...) {
         tibble::tibble(cluster = 1:nClusters,
                        clusterSize = clusterSizes)
 
-    })
-    data <- dplyr::bind_rows(data, .id = "model")
+        }, .id = "model")
 
-    ggplot2::ggplot(data, ggplot2::aes(
-        x = factor(cluster),
-        y = clusterSize,
-        col = model
-    )) +
+    ggplot2::ggplot(data, ggplot2::aes(x = factor(cluster), y = clusterSize, col = model)) +
         ggplot2::geom_point(size = 3,
                             position = ggplot2::position_dodge(width = .5)) +
         ggplot2::labs(title = "Cluster size",
@@ -515,7 +500,7 @@ plotSimilarityMatrix <- function(...) {
         names(riskprofs) <- names
     }
 
-    data <- lapply(riskprofs, function(d) {
+    data <- purrr::map_dfr(riskprofs, function(d) {
 
         disSimMat <- d$riskProfClusObj$clusObjDisSimMat
 
@@ -539,8 +524,7 @@ plotSimilarityMatrix <- function(...) {
         m$type <- "Subjects in original order"
         m2$type <- "Subjects reordered by hclust"
         m3 <- dplyr::bind_rows(m, m2)
-    })
-    data <- dplyr::bind_rows(data, .id = "model")
+        }, .id = "model")
 
     ggplot2::ggplot(data, ggplot2::aes(x = Var1, y = Var2, fill = value)) +
         ggplot2::geom_tile() +
@@ -580,12 +564,12 @@ plotVarSelectRho <- function(...) {
         names(riskprofs) <- names
     }
 
-    data <- lapply(riskprofs, function(m) {
+    data <- purrr::map_dfr(riskprofs, function(m) {
         rho <- tabulateVarSelectRho(m)$rhoMean # Add option for rho_file location
         ecd <- ecdf(rho)(rho) # ecdf(rho) returns a function!
         tibble::tibble(rho = rho, ecd = ecd)
-    })
-    data <- dplyr::bind_rows(data, .id = "model")
+        }, .id = "model")
+
     ggplot2::ggplot(data, ggplot2::aes(x = rho, y = ecd, col = model)) +
         ggplot2::geom_line() +
         ggplot2::labs(title = "ECDF of rho",
@@ -610,12 +594,10 @@ plotRhoDistributions <- function(...) {
         names(riskprofs) <- names
     }
 
-    data <- lapply(riskprofs, function(m) {
-        tabulateVarSelectRho(m) # Add option for rho_file location
-    })
-    data <- dplyr::bind_rows(data, .id = "model") %>%
+    data <- purrr::map_dfr(riskprofs, tabulateVarSelectRho, id = "model") %>%
         dplyr::rename(mean = rhoMean, median = rhoMedian) %>%
         tidyr::gather(centre, value, mean, median)
+
     ggplot2::ggplot(data, ggplot2::aes(x = factor(var), col = model, group = model)) +
         ggplot2::geom_linerange(ggplot2::aes(ymin = rhoLowerCI, ymax = rhoUpperCI), position = ggplot2::position_dodge(width = 0.25)) +
         ggplot2::geom_point(ggplot2::aes(y = value, shape = centre), position = ggplot2::position_dodge(width = 0.25)) +
@@ -643,15 +625,15 @@ codaFromPremium <- function(global.parameter, ...) {
         names(models) <- names
     }
 
-    data <- lapply(models, function(m) {
+    purrr::map(models, function(m) {
         for (i in 1:length(m)) {
             assign(names(m)[i], m[[i]])
         }
         parFileName <- file.path(directoryPath,
                                  paste(fileStem, "_", global.parameter, ".txt", sep = ""))
         parData <- coda::as.mcmc(read.table(parFileName)$V1)
-    })
-    coda::mcmc.list(data)
+        }) %>%
+        coda::mcmc.list()
 }
 
 #' Get PReMiuM hyperparameters
