@@ -5,7 +5,7 @@
 \title{Plot covariate profiles by covariate}
 \usage{
 plotCovariateProfiles(riskProfObj, whichCovariates = NULL,
-  rhoMinimum = NULL, useProfileStar = TRUE, covariate_levels = NULL,
+  rhoOrder = TRUE, useProfileStar = TRUE, covariate_levels = NULL,
   covariate_labels = NULL)
 }
 \arguments{
@@ -13,20 +13,17 @@ plotCovariateProfiles(riskProfObj, whichCovariates = NULL,
 \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.}
 
 \item{whichCovariates}{A vector of indices or a vector of strings
-corresponding to the covariates that are to be displayed. If
-a single integer, this is interpreted as the 'top N' covariates,
-as ranked by their value of \code{rho} (requires the model to
-have been fitted with variable selection).}
+corresponding to the covariates that are to be displayed.}
 
-\item{rhoMinimum}{As an alternative to \code{whichCovariates},
-plot all covariates whose value of \code{rho} is greater than
-some threshold (requires the model to have been fitted with
-variable selection). Ignored if \code{whichCovariates} is specified.}
+\item{rhoOrder}{Should covariates be ordered in descending order of \code{rho}?
+If \code{TRUE}, the default, then indices given in \code{whichCovariates}
+will be interpreted as indices of the reordered covariates.
+Ignored silently if variable selection was not used.}
 
-\item{useProfileStar}{To be set equal to TRUE only if a variable
-selection procedure has been run. The definition of the star
+\item{useProfileStar}{The definition of the star
 profile is given in Liverani, S., Hastie, D. I. and Richardson,
-S. (2013) PReMiuM: An R package for Bayesian profile regression.}
+S. (2013) PReMiuM: An R package for Bayesian profile regression.
+Ignored silently if variable selection was not used.}
 
 \item{covariate_levels}{Vector of integer values taken by the
 (discrete) covariates, specifying the order of the facets.}
