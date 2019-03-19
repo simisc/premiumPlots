@@ -192,8 +192,7 @@ plotProfilesByCluster <- function (riskProfObj,
             x = "Covariate",
             y = "Proportion (by cluster)",
             title = "Covariate profiles",
-            subtitle = "Black pips: empirical proportions in each covariate category.\nDark fill: category more prevalent within cluster than overall."
-        ) +
+            subtitle = "Black pips: empirical proportions in each covariate category.\nDark fill: category more prevalent within cluster than overall.") +
         ggplot2::scale_fill_discrete(name = covariate_info$title) +
         ggplot2::scale_alpha_discrete(guide = FALSE,
                                       range = c(0.25, 1)) +
@@ -209,14 +208,14 @@ plotProfilesByCluster <- function (riskProfObj,
 #'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
 #' @param whichCovariates A vector of indices or a vector of strings
 #'     corresponding to the covariates that are to be displayed. If
-#'     a single integer, this is intepreted as the 'top N' covariates,
+#'     a single integer, this is interpreted as the 'top N' covariates,
 #'     as ranked by their value of \code{rho} (requires the model to
 #'     have been fitted with variable selection).
-#' @param rhoMinimum As an alternative to \code{whichCovariates}, plot
+#' @param rhoMinimum As an alternative to \code{whichCovariates},
 #'     plot all covariates whose value of \code{rho} is greater than
 #'     some threshold (requires the model to have been fitted with
-#'     variable selection).
-#' @param useProfileStar o be set equal to TRUE only if a variable
+#'     variable selection). Ignored if \code{whichCovariates} is specified.
+#' @param useProfileStar To be set equal to TRUE only if a variable
 #'     selection procedure has been run. The definition of the star
 #'     profile is given in Liverani, S., Hastie, D. I. and Richardson,
 #'     S. (2013) PReMiuM: An R package for Bayesian profile regression.
@@ -274,7 +273,6 @@ tabulateCovariateProfiles <- function (riskProfObj,
                                        rho_file = NULL) {
     # This now does most of the work for plotCovariateProfiles
     # Use same output for new covariate profiles plot
-    # Vectorisation of inner loop made this 3x faster...
 
     for (i in 1:length(riskProfObj))
         assign(names(riskProfObj)[i],
@@ -287,29 +285,40 @@ tabulateCovariateProfiles <- function (riskProfObj,
                clusObjRunInfoObj[[i]])
 
     xModel == "Discrete" ||
-        stop(
-            "Only implemented for discrete covariates.\n
-            Use plotRiskProfile() for Normal- or Mixed-covariate models."
-        )
+        stop("Only implemented for discrete covariates.\nUse plotRiskProfile() for Normal- or Mixed-covariate models.")
 
-    if (useProfileStar & varSelect) {
-        profile <- profileStar
-    }
-
-    ### HERE: ADD CONDITION ON varSelect==TRUE ###
     rhotab <- tabulateVarSelectRho(riskProfObj, rho_file = rho_file)
 
-    if (is.null(whichCovariates) & !is.null(rhoMinimum)) {
-        # If specify minimum rho value instead of which covariates
-        rhotab <- dplyr::filter(rhotab, rhoMean >= rhoMinimum)
-        whichCovariates <- rhotab$var
+    if (varSelect) {
+
+        if (useProfileStar) {
+            profile <- profileStar
+        }
+
+        if (is.null(whichCovariates) & !is.null(rhoMinimum)) {
+            # If specify minimum rho value instead of which covariates
+            rhotab <- dplyr::filter(rhotab, rhoMean >= rhoMinimum)
+            whichCovariates <- rhotab$var
+        }
+
+        if (is.integer(whichCovariates) & length(whichCovariates) == 1) {
+            # If whichCovariates is a single integer, treat it as the 'top N'
+            rhotab <- dplyr::arrange(rhotab, rhoRank)
+            whichCovariates <- rhotab$var[1:whichCovariates]
+        }
+
+    } else {
+        if (useProfileStar) {
+            warning("No variable selection: can't use ProfileStar--using standard profile.")
+        }
+        if (is.null(whichCovariates) & !is.null(rhoMinimum)) {
+            stop("No variable selection: can't use rhoMinimum--specify whichCovariates.")
+        }
+        if (is.integer(whichCovariates) & length(whichCovariates) == 1) {
+            warning("No variable selection: can't rank covariates--returning single covariate with index N.")
+        }
     }
 
-    if (is.numeric(whichCovariates) & length(whichCovariates) == 1) {
-        # If whichCovariates is a single integer, treat it as the 'top N'
-        rhotab <- dplyr::arrange(rhotab, rhoRank)
-        whichCovariates <- rhotab$var[1:whichCovariates]
-    }
 
     if (!is.null(whichCovariates)) {
         if (!is.numeric(whichCovariates)) {
@@ -322,11 +331,9 @@ tabulateCovariateProfiles <- function (riskProfObj,
     }
 
     orderStat <- apply(risk, 2, median)
-    # meanSortIndex <- order(orderStat, decreasing = F)
-    # meanSortIndex <- order(clusterSizes, decreasing = T)
-    meanSortIndex <- order(clusterSizes, orderStat, decreasing = T)
-    clusterSizes <- clusterSizes[meanSortIndex]
-    profile <- profile[, meanSortIndex, , ]
+    sortIndex <- order(clusterSizes, orderStat, decreasing = T)
+    clusterSizes <- clusterSizes[sortIndex]
+    profile <- profile[, sortIndex, , ]
 
     profDFlist = list()
 
@@ -410,11 +417,9 @@ plotResponse <- function (riskProfObj,
     }
 
     orderStat <- apply(risk, 2, median)
-    # meanSortIndex <- order(orderStat, decreasing = F)
-    # meanSortIndex <- order(clusterSizes, decreasing = T)
-    meanSortIndex <- order(clusterSizes, orderStat, decreasing = T)
-    clusterSizes <- clusterSizes[meanSortIndex]
-    risk <- risk[, meanSortIndex, ]
+    sortIndex <- order(clusterSizes, orderStat, decreasing = T)
+    clusterSizes <- clusterSizes[sortIndex]
+    risk <- risk[, sortIndex, ]
 
     miniDFlist = list() # still growing lists, not ideal...
 
@@ -496,10 +501,8 @@ plotClusterSizes <- function (...) {
         clusterSizes <- r$riskProfClusObj$clusterSizes
 
         orderStat <- apply(r$risk, 2, median)
-        # meanSortIndex <- order(orderStat, decreasing = F)
-        # meanSortIndex <- order(clusterSizes, decreasing = T)
-        meanSortIndex <- order(clusterSizes, orderStat, decreasing = T)
-        clusterSizes <- clusterSizes[meanSortIndex]
+        sortIndex <- order(clusterSizes, orderStat, decreasing = T)
+        clusterSizes <- clusterSizes[sortIndex]
 
         tibble::tibble(cluster = 1:nClusters,
                        clusterSize = clusterSizes)

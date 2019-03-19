@@ -14,16 +14,16 @@ plotCovariateProfiles(riskProfObj, whichCovariates = NULL,
 
 \item{whichCovariates}{A vector of indices or a vector of strings
 corresponding to the covariates that are to be displayed. If
-a single integer, this is intepreted as the 'top N' covariates,
+a single integer, this is interpreted as the 'top N' covariates,
 as ranked by their value of \code{rho} (requires the model to
 have been fitted with variable selection).}
 
-\item{rhoMinimum}{As an alternative to \code{whichCovariates}, plot
+\item{rhoMinimum}{As an alternative to \code{whichCovariates},
 plot all covariates whose value of \code{rho} is greater than
 some threshold (requires the model to have been fitted with
-variable selection).}
+variable selection). Ignored if \code{whichCovariates} is specified.}
 
-\item{useProfileStar}{o be set equal to TRUE only if a variable
+\item{useProfileStar}{To be set equal to TRUE only if a variable
 selection procedure has been run. The definition of the star
 profile is given in Liverani, S., Hastie, D. I. and Richardson,
 S. (2013) PReMiuM: An R package for Bayesian profile regression.}
