@@ -4,11 +4,15 @@
 \alias{tabulateVarSelectRho}
 \title{Summarise \code{rho}}
 \usage{
-tabulateVarSelectRho(riskProfObj)
+tabulateVarSelectRho(riskProfObj, rho_file = NULL)
 }
 \arguments{
 \item{riskProfObj}{Object of type \code{riskProfObj}, output of
 \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.}
+
+\item{rho_file}{Path to the rho.txt file written by \code{\link[PReMiuM]{profRegr}}.
+If NULL (the default), path is taken from the \code{ClusObjRunInfoObj} element
+of \code{riskProfObj}.}
 }
 \value{
 A \code{\link[tibble]{tibble}} containing the mean, median,

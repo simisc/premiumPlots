@@ -1,7 +1,7 @@
 Package: premiumPlots
 Type: Package
 Title: Plot PReMiuM results and diagnostics
-Version: 1.0.2
+Version: 1.0.3
 Author: Simon Schoenbuchner
 Description: Utility functions to plot the results of models fitted
     using the PReMiuM package, and to compare across MCMC chains from

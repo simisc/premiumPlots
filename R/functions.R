@@ -16,11 +16,14 @@ NULL
 #' @export
 #' @param riskProfObj Object of type \code{riskProfObj}, output of
 #'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
+#' @param rho_file Path to the rho.txt file written by \code{\link[PReMiuM]{profRegr}}.
+#'     If NULL (the default), path is taken from the \code{ClusObjRunInfoObj} element
+#'     of \code{riskProfObj}.
 #' @return A \code{\link[tibble]{tibble}} containing the mean, median,
 #'     lower (0.05) and upper (0.95) quantiles for each covariate,
 #'     and a ranking from the covariate with the highest value of
 #'     \code{rho} to the lowest.
-tabulateVarSelectRho <- function (riskProfObj) {
+tabulateVarSelectRho <- function (riskProfObj, rho_file = NULL) {
 
     for (i in 1:length(riskProfObj))
         assign(names(riskProfObj)[i],
@@ -46,9 +49,13 @@ tabulateVarSelectRho <- function (riskProfObj) {
         )
     }
 
-    rhoFileName <-
-        file.path(directoryPath, paste(fileStem, "_rho.txt", sep = ""))
-    rhoMat <- matrix(scan(rhoFileName, what = double(), quiet = T),
+    if (is.null(rho_file)) {
+        # Allows rho_file to be specified in call (e.g. if WD different to the one in which profRegr was called)
+        # Propagate this option to functions that call tabulateVarSelectRho()
+        rho_file <- file.path(directoryPath, paste(fileStem, "_rho.txt", sep = ""))
+    }
+
+    rhoMat <- matrix(scan(rho_file, what = double(), quiet = T),
                      ncol = nCovariates,
                      byrow = T)
     firstLine <- ifelse(reportBurnIn, nBurn / nFilter + 2, 1)
@@ -185,8 +192,7 @@ plotProfilesByCluster <- function (riskProfObj,
             x = "Covariate",
             y = "Proportion (by cluster)",
             title = "Covariate profiles",
-            subtitle = "Black pips: empirical proportions in each covariate category.\n
-                        Dark fill: category more prevalent within cluster than overall."
+            subtitle = "Black pips: empirical proportions in each covariate category.\nDark fill: category more prevalent within cluster than overall."
         ) +
         ggplot2::scale_fill_discrete(name = covariate_info$title) +
         ggplot2::scale_alpha_discrete(guide = FALSE,
@@ -264,7 +270,8 @@ plotCovariateProfiles <- function (riskProfObj,
 tabulateCovariateProfiles <- function (riskProfObj,
                                        whichCovariates = NULL,
                                        rhoMinimum = NULL,
-                                       useProfileStar = TRUE) {
+                                       useProfileStar = TRUE,
+                                       rho_file = NULL) {
     # This now does most of the work for plotCovariateProfiles
     # Use same output for new covariate profiles plot
     # Vectorisation of inner loop made this 3x faster...
@@ -290,8 +297,7 @@ tabulateCovariateProfiles <- function (riskProfObj,
     }
 
     ### HERE: ADD CONDITION ON varSelect==TRUE ###
-
-    rhotab <- tabulateVarSelectRho(riskProfObj)
+    rhotab <- tabulateVarSelectRho(riskProfObj, rho_file = rho_file)
 
     if (is.null(whichCovariates) & !is.null(rhoMinimum)) {
         # If specify minimum rho value instead of which covariates
@@ -299,7 +305,7 @@ tabulateCovariateProfiles <- function (riskProfObj,
         whichCovariates <- rhotab$var
     }
 
-    if (length(whichCovariates) == 1) {
+    if (is.numeric(whichCovariates) & length(whichCovariates) == 1) {
         # If whichCovariates is a single integer, treat it as the 'top N'
         rhotab <- dplyr::arrange(rhotab, rhoRank)
         whichCovariates <- rhotab$var[1:whichCovariates]
@@ -331,8 +337,7 @@ tabulateCovariateProfiles <- function (riskProfObj,
             probMat <- profile[, , j, k]
             probMeans <- apply(probMat, 2, mean)
 
-            probMean <-
-                sum(probMeans * clusterSizes) / sum(clusterSizes)
+            probMean <- sum(probMeans * clusterSizes) / sum(clusterSizes)
             probLower <- apply(probMat, 2, quantile, 0.05)
             probUpper <- apply(probMat, 2, quantile, 0.95)
 
@@ -599,7 +604,7 @@ plotVarSelectRho <- function(...) {
     }
 
     data <- lapply(riskprofs, function(m) {
-        rho <- tabulateVarSelectRho(m)$rhoMean
+        rho <- tabulateVarSelectRho(m)$rhoMean # Add option for rho_file location
         ecd <- ecdf(rho)(rho) # ecdf(rho) returns a function!
         tibble::tibble(rho = rho, ecd = ecd)
     })
@@ -629,7 +634,7 @@ plotRhoDistributions <- function(...) {
     }
 
     data <- lapply(riskprofs, function(m) {
-        tabulateVarSelectRho(m)
+        tabulateVarSelectRho(m) # Add option for rho_file location
     })
     data <- dplyr::bind_rows(data, .id = "model") %>%
         dplyr::rename(mean = rhoMean, median = rhoMedian) %>%
