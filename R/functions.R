@@ -301,7 +301,7 @@ tabulateCovariateProfiles <- function (riskProfObj,
             whichCovariates <- rhotab$var
         }
 
-        if (is.integer(whichCovariates) & length(whichCovariates) == 1) {
+        if (is.numeric(whichCovariates) & length(whichCovariates) == 1) {
             # If whichCovariates is a single integer, treat it as the 'top N'
             rhotab <- dplyr::arrange(rhotab, rhoRank)
             whichCovariates <- rhotab$var[1:whichCovariates]
@@ -314,8 +314,9 @@ tabulateCovariateProfiles <- function (riskProfObj,
         if (is.null(whichCovariates) & !is.null(rhoMinimum)) {
             stop("No variable selection: can't use rhoMinimum--specify whichCovariates.")
         }
-        if (is.integer(whichCovariates) & length(whichCovariates) == 1) {
-            warning("No variable selection: can't rank covariates--returning single covariate with index N.")
+        if (is.numeric(whichCovariates) & length(whichCovariates) == 1) {
+            warning("No variable selection: can't rank covariates--returning first N instead of top N.")
+            whichCovariates <- 1:whichCovariates
         }
     }
 
@@ -326,14 +327,14 @@ tabulateCovariateProfiles <- function (riskProfObj,
         }
         covNames <- covNames[whichCovariates]
         nCovariates <- length(whichCovariates)
-        profile <- profile[, , whichCovariates, ]
+        profile <- profile[, , whichCovariates, , drop = FALSE]
         nCategories <- nCategories[whichCovariates]
     }
 
     orderStat <- apply(risk, 2, median)
     sortIndex <- order(clusterSizes, orderStat, decreasing = T)
     clusterSizes <- clusterSizes[sortIndex]
-    profile <- profile[, sortIndex, , ]
+    profile <- profile[, sortIndex, , , drop = FALSE]
 
     profDFlist = list()
 
