@@ -594,7 +594,7 @@ plotRhoDistributions <- function(...) {
         names(riskprofs) <- names
     }
 
-    data <- purrr::map_dfr(riskprofs, tabulateVarSelectRho, id = "model") %>%
+    data <- purrr::map_dfr(riskprofs, tabulateVarSelectRho, .id = "model") %>%
         dplyr::rename(mean = rhoMean, median = rhoMedian) %>%
         tidyr::gather(centre, value, mean, median)
 
