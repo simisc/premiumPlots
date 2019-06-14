@@ -49,12 +49,12 @@ tabulateVarSelectRho <- function (riskProfObj, rho_file = NULL) {
         (nSweeps + ifelse(reportBurnIn, nBurn + 1, 0)) / nFilter
     rhoMat <- rhoMat[firstLine:lastLine, ]
     rhoMean <- apply(rhoMat, 2, mean)
-    rhoMedian <- apply(rhoMat, 2, median)
-    rhoLowerCI <- apply(rhoMat, 2, quantile, 0.05)
-    rhoUpperCI <- apply(rhoMat, 2, quantile, 0.95)
+    rhoMedian <- apply(rhoMat, 2, stats::median)
+    rhoLowerCI <- apply(rhoMat, 2, stats::quantile, 0.05)
+    rhoUpperCI <- apply(rhoMat, 2, stats::quantile, 0.95)
 
     tibble::tibble(
-        var = covNames,
+        covname = covNames,
         rhoMean = rhoMean,
         rhoMedian = rhoMedian,
         rhoLowerCI = rhoLowerCI,
@@ -158,7 +158,7 @@ plotProfilesByCluster <- function (riskProfObj,
 
     ggplot2::ggplot(covtab,
                     ggplot2::aes(
-                        x = reorder(covname, covOrder),
+                        x = stats::reorder(covname, covOrder),
                         y = prop,
                         fill = factor(category),
                         alpha = fillColor == "high"
@@ -242,7 +242,7 @@ plotCovariateProfiles <- function (riskProfObj,
         ggplot2::theme(legend.position = "none",
                        strip.text = ggplot2::element_text(size = 6)) +
         ggplot2::labs(x = "Cluster", title = "Covariate profiles", y = "Probability") +
-        ggplot2::facet_grid(factor(category) ~ reorder(covname, covOrder))
+        ggplot2::facet_grid(factor(category) ~ stats::reorder(covname, covOrder))
 }
 
 #' Make table of covariate profiles with info for plotting
@@ -298,14 +298,14 @@ tabulateCovariateProfiles <- function (riskProfObj,
             if (is.numeric(whichCovariates)) {
                 whichCovariates <- rhotab %>%
                     dplyr::filter(rhoRank %in% whichCovariates) %>%
-                    "$"(var)
+                    "$"(covname)
             } else if (is.character(whichCovariates)) {
                 whichCovariates <- rhotab %>%
-                    dplyr::filter(var %in% whichCovariates) %>%
-                    "$"(var)
+                    dplyr::filter(covname %in% whichCovariates) %>%
+                    "$"(covname)
             } else {
                 whichCovariates <- rhotab %>%
-                    "$"(var)
+                    "$"(covname)
             }
 
         }
@@ -325,7 +325,7 @@ tabulateCovariateProfiles <- function (riskProfObj,
 
     }
 
-    orderStat <- apply(risk, 2, median)
+    orderStat <- apply(risk, 2, stats::median)
     sortIndex <- order(clusterSizes, orderStat, decreasing = T)
     clusterSizes <- clusterSizes[sortIndex]
     profile <- profile[, sortIndex, , , drop = FALSE]
@@ -343,8 +343,8 @@ tabulateCovariateProfiles <- function (riskProfObj,
             probMeans <- apply(probMat, 2, mean)
 
             probMean <- sum(probMeans * clusterSizes) / sum(clusterSizes)
-            probLower <- apply(probMat, 2, quantile, 0.05)
-            probUpper <- apply(probMat, 2, quantile, 0.95)
+            probLower <- apply(probMat, 2, stats::quantile, 0.05)
+            probUpper <- apply(probMat, 2, stats::quantile, 0.95)
 
             clusterDF <- tibble::tibble(
                 cluster = 1:nClusters,
@@ -404,7 +404,7 @@ plotResponse <- function (riskProfObj,
         stop("Only for categorical response, use plotRiskProfile() for others...")
     }
 
-    orderStat <- apply(risk, 2, median)
+    orderStat <- apply(risk, 2, stats::median)
     sortIndex <- order(clusterSizes, orderStat, decreasing = T)
     clusterSizes <- clusterSizes[sortIndex]
     risk <- risk[, sortIndex, ]
@@ -415,8 +415,8 @@ plotResponse <- function (riskProfObj,
         probMeans <- apply(probMat, 2, mean, trim = 0.005)
 
         probMean <- sum(probMeans * clusterSizes) / sum(clusterSizes)
-        probLower <- apply(probMat, 2, quantile, 0.05)
-        probUpper <- apply(probMat, 2, quantile, 0.95)
+        probLower <- apply(probMat, 2, stats::quantile, 0.05)
+        probUpper <- apply(probMat, 2, stats::quantile, 0.95)
 
         clusterDF <- tibble::tibble(
             cluster = 1:nClusters,
@@ -482,7 +482,7 @@ plotClusterSizes <- function (...) {
         nClusters <- r$riskProfClusObj$nClusters
         clusterSizes <- r$riskProfClusObj$clusterSizes
 
-        orderStat <- apply(r$risk, 2, median)
+        orderStat <- apply(r$risk, 2, stats::median)
         sortIndex <- order(clusterSizes, orderStat, decreasing = T)
         clusterSizes <- clusterSizes[sortIndex]
 
@@ -498,7 +498,7 @@ plotClusterSizes <- function (...) {
                       y = "Number of subjects",
                       x = "Cluster") +
         ggplot2::expand_limits(y = 0) +
-        scale_colour_discrete(guide = length(riskprofs) > 1)
+        ggplot2::scale_colour_discrete(guide = length(riskprofs) > 1)
 }
 
 #' Plot similarity matrix
@@ -530,8 +530,8 @@ plotSimilarityMatrix <- function(...) {
 
         dsmat <- 1 - vec2mat(disSimMat, nrow = n)
 
-        ddist <- as.dist(1 - dsmat)
-        hc <- hclust(ddist)
+        ddist <- stats::as.dist(1 - dsmat)
+        hc <- stats::hclust(ddist)
         dsmat2 <- dsmat[hc$order, hc$order]
 
         dsmat[lower.tri(dsmat)] <- NA
@@ -584,7 +584,7 @@ plotVarSelectRho <- function(...) {
 
     data <- purrr::map_dfr(riskprofs, function(m) {
         rho <- tabulateVarSelectRho(m)$rhoMean # Add option for rho_file location
-        ecd <- ecdf(rho)(rho) # ecdf(rho) returns a function!
+        ecd <- stats::ecdf(rho)(rho) # ecdf(rho) returns a function!
         tibble::tibble(rho = rho, ecd = ecd)
         }, .id = "model")
 
@@ -613,15 +613,15 @@ plotRhoDistributions <- function(...) {
     }
 
     data <- purrr::map_dfr(riskprofs, tabulateVarSelectRho, .id = "model") %>%
-        dplyr::rename(mean = rhoMean, median = rhoMedian) %>%
-        tidyr::gather(centre, value, mean, median)
+        dplyr::rename(Mean = rhoMean, Median = rhoMedian) %>%
+        tidyr::gather(centre, value, Mean, Median)
 
-    ggplot2::ggplot(data, ggplot2::aes(x = factor(var), col = model, group = model)) +
+    ggplot2::ggplot(data, ggplot2::aes(x = factor(covname), col = model, group = model)) +
         ggplot2::geom_linerange(ggplot2::aes(ymin = rhoLowerCI, ymax = rhoUpperCI), position = ggplot2::position_dodge(width = 0.25)) +
         ggplot2::geom_point(ggplot2::aes(y = value, shape = centre), position = ggplot2::position_dodge(width = 0.25)) +
         ggplot2::labs(x = "Covariate", y = "rho") +
         ggplot2::scale_shape_manual(name = NULL,
-                                    values = c(mean = 16, median = 4))
+                                    values = c(Mean = 16, Median = 4))
 }
 
 #' Make a coda object PReMiuM samples
@@ -650,7 +650,7 @@ codaFromPremium <- function(global_parameter, ...) {
         }
         parFileName <- file.path(directoryPath,
                                  paste(fileStem, "_", global_parameter, ".txt", sep = ""))
-        parData <- coda::as.mcmc(read.table(parFileName)$V1)
+        parData <- coda::as.mcmc(utils::read.table(parFileName)$V1)
         }) %>%
         coda::mcmc.list()
 }
@@ -682,7 +682,7 @@ getHyperparams <- function(...) {
         }
         parFileName <- file.path(directoryPath,
                                  paste(fileStem, "_hyper.txt", sep = ""))
-        hypstr <- read.table(parFileName)$V1
+        hypstr <- utils::read.table(parFileName)$V1
         hypstr <- stringr::str_split(hypstr, "=")
         hyptab <- t(sapply(hypstr, function (h) {
             h
@@ -728,3 +728,12 @@ renderPremiumReport <-
         filepath <- file.path(knitr.root.directory, filename)
         rmarkdown::render(rmd.template, output_file = filepath)
     }
+
+# to appease R CMD check
+utils::globalVariables(c("Var1", "Var2", "category", "centre", "clusObjRunInfoObj", "cluster", "clusterSize",
+                         "covNames", "covOrder", "covname", "directoryPath", "ecd", "emp_propn", "est", "fileStem",
+                         "fillColor", "includeResponse", "lower", "model", "nBurn", "nCategoriesY",
+                         "nClusters", "nCovariates", "nFilter", "nSweeps", "profileStar", "prop", "reportBurnIn",
+                         "rho", "rhoLowerCI", "rhoMean", "rhoMedian", "rhoRank", "rhoUpperCI", "risk",
+                         "riskProfClusObj", "type", "upper", "value", "varSelect",
+                         "vec2mat", "x", "xModel", "yModel", "Mean", "Median"))
