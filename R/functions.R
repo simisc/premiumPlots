@@ -245,7 +245,25 @@ plotCovariateProfiles <- function (riskProfObj,
         ggplot2::facet_grid(factor(category) ~ reorder(covname, covOrder))
 }
 
+#' Make table of covariate profiles with info for plotting
+#'
+#' Used by \code{\link{plotProfilesByCluster}} and \code{\link{plotCovariateProfiles}}
 #' @export
+#' @param riskProfObj Object of type \code{riskProfObj}, output of
+#'     \code{\link[PReMiuM]{calcAvgRiskAndProfile}}.
+#' @param whichCovariates A vector of indices or a vector of strings
+#'     corresponding to the covariates that are to be displayed.
+#' @param rhoOrder Should covariates be ordered in descending order of \code{rho}?
+#'     If \code{TRUE}, the default, then indices given in \code{whichCovariates}
+#'     will be interpreted as indices of the reordered covariates.
+#'     Ignored silently if variable selection was not used.
+#' @param useProfileStar The definition of the star
+#'     profile is given in Liverani, S., Hastie, D. I. and Richardson,
+#'     S. (2013) PReMiuM: An R package for Bayesian profile regression.
+#'     Ignored silently if variable selection was not used.
+#' @param rho_file Path to the rho.txt file written by \code{\link[PReMiuM]{profRegr}}.
+#'     If NULL (the default), path is taken from the \code{ClusObjRunInfoObj} element
+#'     of \code{riskProfObj}.
 tabulateCovariateProfiles <- function (riskProfObj,
                                        whichCovariates = NULL,
                                        rhoOrder = TRUE,
@@ -612,10 +630,11 @@ plotRhoDistributions <- function(...) {
 #'     a \code{\link[coda]{mcmc.list}} object with multiple chains.
 #'     Useful for convergence diagnositics.
 #' @export
+#' @param global_parameter Parameter to convert
 #' @param ... Object(s) of type \code{runInfoObj}, output of
 #'     \code{\link[PReMiuM]{profRegr}}.
 #' @return A \code{\link[coda]{mcmc.list}}.
-codaFromPremium <- function(global.parameter, ...) {
+codaFromPremium <- function(global_parameter, ...) {
 
     models <- list(...)
     if (is.null(names(models))) {
@@ -630,7 +649,7 @@ codaFromPremium <- function(global.parameter, ...) {
             assign(names(m)[i], m[[i]])
         }
         parFileName <- file.path(directoryPath,
-                                 paste(fileStem, "_", global.parameter, ".txt", sep = ""))
+                                 paste(fileStem, "_", global_parameter, ".txt", sep = ""))
         parData <- coda::as.mcmc(read.table(parFileName)$V1)
         }) %>%
         coda::mcmc.list()

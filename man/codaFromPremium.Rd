@@ -4,9 +4,11 @@
 \alias{codaFromPremium}
 \title{Make a coda object PReMiuM samples}
 \usage{
-codaFromPremium(global.parameter, ...)
+codaFromPremium(global_parameter, ...)
 }
 \arguments{
+\item{global_parameter}{Parameter to convert}
+
 \item{...}{Object(s) of type \code{runInfoObj}, output of
 \code{\link[PReMiuM]{profRegr}}.}
 }
