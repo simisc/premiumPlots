@@ -3,7 +3,7 @@
 premiumPlots
 ============
 
-[![Build Status](https://travis-ci.org/simisc/premiumPlots.svg?branch=master)](https://travis-ci.org/simisc/premiumPlots)
+[![Build Status](https://travis-ci.com/simisc/premiumPlots.svg?branch=master)](https://travis-ci.com/simisc/premiumPlots)
 
 Plot results and diagnostics for profile regression models fitted using the `PReMiuM` package (Liverani et al 2013).
 
