@@ -1,14 +1,16 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-premiumPlots
-============
 
-[![Build Status](https://travis-ci.com/simisc/premiumPlots.svg?branch=master)](https://travis-ci.com/simisc/premiumPlots)
+# premiumPlots
 
-Plot results and diagnostics for profile regression models fitted using the `PReMiuM` package (Liverani et al 2013).
+[![Build
+Status](https://travis-ci.com/simisc/premiumPlots.svg?branch=master)](https://travis-ci.com/simisc/premiumPlots)
+[![DOI](https://zenodo.org/badge/120929260.svg)](https://zenodo.org/badge/latestdoi/120929260)
 
-Installation
-------------
+Plot results and diagnostics for profile regression models fitted using
+the `PReMiuM` package (Liverani et al 2013).
+
+## Installation
 
 You can install premiumPlots from github with:
 
@@ -17,7 +19,6 @@ You can install premiumPlots from github with:
 devtools::install_github("simisc/premiumPlots")
 ```
 
-Example
--------
+## Example
 
 To do.
