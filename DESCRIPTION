@@ -2,8 +2,10 @@ Package: premiumPlots
 Type: Package
 Title: Plot PReMiuM results and diagnostics
 Version: 1.1.1
-Authors@R: person("Simon", "Schoenbuchner", email = "sms86@cam.ac.uk",
-  role = c("aut", "cre"))
+Authors@R: person("Simon", "Schoenbuchner",
+  email = "sms86@cam.ac.uk",
+  role = c("aut", "cre"),
+  comment = c(ORCID = "0000-0003-4892-2170"))
 Description: Utility functions to plot the results of models fitted
     using the PReMiuM package, and to compare across MCMC chains from
     multiple PReMiuM models. Currently only supports models with a
