@@ -1,7 +1,7 @@
 Package: premiumPlots
 Type: Package
 Title: Plot PReMiuM results and diagnostics
-Version: 1.1.1
+Version: 1.2.0
 Authors@R: person("Simon", "Schoenbuchner",
   email = "sms86@cam.ac.uk",
   role = c("aut", "cre"),
